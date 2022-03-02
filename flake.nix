@@ -10,15 +10,23 @@
   outputs = { self, nixpkgs, deploy-rs, flake-utils }:
     {
       deploy.nodes = {
-        sidecar = {
-          # Todo make this a runtime attribute
-          hostname = "35.88.223.159";
+        indexer = {
+          # TODO would be ideal if this would just work, but we don't commit the tfstate file
+          # hostname = (builtins.fromJSON (builtins.readFile ./terraform.tfstate)).outputs.ip.value;
+          hostname = "34.222.188.35";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
+          };
+        };
+        deployer = {
+          hostname = "35.84.143.136";
           profiles.system = {
             user = "root";
             sshUser = "root";
+            # sshOpts = [ "-i" "/Users/marco/.ssh/marco-storetheindex-deployment" ];
             path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
           };
-
         };
       };
       nixosConfigurations = {
@@ -26,6 +34,11 @@
           {
             system = "x86_64-linux";
             modules = [ ./indexer.nix ];
+          };
+        deployer = nixpkgs.lib.nixosSystem
+          {
+            system = "x86_64-linux";
+            modules = [ ./deployer.nix ];
           };
       };
     } //
