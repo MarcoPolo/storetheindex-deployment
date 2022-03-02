@@ -49,6 +49,7 @@
         in
         {
           packages.hello = pkgs.hello;
+          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { go = pkgs.go_1_17; };
           defaultPackage = self.packages.${system}.hello;
           devShell = pkgs.mkShell {
             buildInputs = [
