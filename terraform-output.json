@@ -4,6 +4,11 @@
     "type": "string",
     "value": "35.88.14.54"
   },
+  "gammazeroIndexerIP": {
+    "sensitive": false,
+    "type": "string",
+    "value": "44.242.165.176"
+  },
   "indexerIP": {
     "sensitive": false,
     "type": "string",
