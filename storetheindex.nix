@@ -1,16 +1,12 @@
-{ pkgs, lib, repoHash, ... }:
+{ pkgs, lib, src, ... }:
 pkgs.buildGo117Module rec {
+  inherit src;
+
   pname = "storetheindex";
   version = "load-testing";
   subPackages = [ "." ];
   checkPhase = "";
 
-  src = pkgs.fetchFromGitHub {
-    owner = "filecoin-project";
-    repo = "storetheindex";
-    rev = "marco/load-testing";
-    sha256 = repoHash;
-  };
 
   vendorSha256 = "sha256-7ZAAJiADH4K8B7PEUWUvxlnRTVIB4psKAOT+pMnufCA=";
 

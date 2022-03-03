@@ -20,6 +20,11 @@ Deploys are run on a remote deployer server. This is for a couple reasons:
 2. Deployer likely has a much faster network connection to the target server
    than you do locally.
 
+Ideally we could still run the deploy command locally and have the build and
+copy happen remotely, but that's [not supported
+yet](https://github.com/serokell/deploy-rs/issues/12) by the deploy-rs tool.
+
+
 Note that an initial deployment to a new server will fail because the deployer
 doesn't know to trust the remote server's public key. To check this run
 `ssh-to-deployer ssh $INDEXER_IP echo ok`.

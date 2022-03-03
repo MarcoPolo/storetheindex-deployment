@@ -7,7 +7,12 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, deploy-rs, flake-utils }:
+  inputs.storetheindex-src = {
+    url = "github:filecoin-project/storetheindex/marco/load-testing";
+    flake = false;
+  };
+
+  outputs = { self, nixpkgs, deploy-rs, flake-utils, storetheindex-src }:
     let
       tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
       deployerIP = tf-output.deployerIP.value;
@@ -74,13 +79,10 @@
               ${rsync-to-deployer}/bin/rsync-to-deployer;
               ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s $@";
             '';
-          storetheindex-repo-hash = "sha256-nMCH6e6Ug/DQ4nL/w54dKd4iUC6tGVOLScrBdUPjhWc=";
-          # Use fakesha to figure out the real hash.
-          # storetheindex-repo-hash = pkgs.lib.fakeSha256;
         in
         {
-          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { repoHash = storetheindex-repo-hash; };
-          packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { repoHash = storetheindex-repo-hash; };
+          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { src = storetheindex-src; };
+          packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { src = storetheindex-src; };
           defaultPackage = self.packages.${system}.storetheindex;
           devShell = pkgs.mkShell {
             INDEXER_IP = deployerIP;

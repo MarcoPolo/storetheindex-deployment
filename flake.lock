@@ -73,7 +73,25 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "storetheindex-src": "storetheindex-src"
+      }
+    },
+    "storetheindex-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1646335678,
+        "narHash": "sha256-tFQPedXmAvnI6NDu0X8mPPwdyyLq5i6GyBqIECSCBig=",
+        "owner": "filecoin-project",
+        "repo": "storetheindex",
+        "rev": "7832fa8f25e830234fc881fc5c39ec63a4dc59a6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "filecoin-project",
+        "ref": "marco/load-testing",
+        "repo": "storetheindex",
+        "type": "github"
       }
     },
     "utils": {
