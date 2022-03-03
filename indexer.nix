@@ -14,7 +14,7 @@
     '';
   };
 
-  environment.systemPackages = with pkgs; [ vim tmux htop go_1_17 ];
+  environment.systemPackages = with pkgs; [ vim tmux htop go_1_17 git ];
 
 
   environment.etc = {

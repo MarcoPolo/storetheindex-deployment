@@ -1,4 +1,4 @@
-indexerIP: { config, pkgs, ... }:
+{ indexerIP, gammazeroIndexerIP }: { config, pkgs, ... }:
 {
 
   services.grafana = {
@@ -36,6 +36,12 @@ indexerIP: { config, pkgs, ... }:
         job_name = "indexer-instance";
         static_configs = [{
           targets = [ "${indexerIP}:3002" ];
+        }];
+      }
+      {
+        job_name = "gammazero-indexer-instance";
+        static_configs = [{
+          targets = [ "${gammazeroIndexerIP}:3002" ];
         }];
       }
     ];

@@ -60,7 +60,7 @@
             system = "x86_64-linux";
             modules = [
               ./deployer.nix
-              (import ./metrics.nix indexerIP)
+              (import ./metrics.nix { inherit indexerIP gammazeroIndexerIP; })
               {
                 environment.systemPackages = with self.packages."x86_64-linux"; [ storetheindex provider-load-gen ];
               }
