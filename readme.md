@@ -1,3 +1,13 @@
+# Quickstart
+1. Clone this repo and `cd` into it.
+1. Install NixOS: https://nixos.org/download.html
+1. Enter the dev environment `nix develop`
+1. Initialize terraform `terraform init`
+1. Launch the instances of terraform with `terraform launch`
+1. Run `ssh-to-deployer ssh $INDEXER_IP echo ok` to have the deployer node learn
+   about the indexer node's public key.
+1. Run `deploy-on-deployer` to deploy everything.
+
 # Local environment setup
 Install [NixOS](https://nixos.org/) and enter the correct with `nix develop`.
 Or, optionally, use ([direnv](https://direnv.net/) which sets up your
