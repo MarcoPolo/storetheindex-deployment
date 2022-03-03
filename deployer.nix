@@ -4,6 +4,7 @@
   ec2.hvm = true;
 
   networking.hostName = "deployer";
+  networking.firewall.enable = false;
 
   # Enable Flakes
   nix = {
@@ -12,6 +13,15 @@
       experimental-features = nix-command flakes
     '';
   };
+
+  environment.systemPackages = with pkgs; [ vim tmux htop ];
+
+  services.nginx =
+    {
+      enable = true;
+      recommendedProxySettings = true;
+      recommendedTlsSettings = true;
+    };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

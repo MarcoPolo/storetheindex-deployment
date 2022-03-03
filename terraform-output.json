@@ -1,0 +1,7 @@
+{
+  "deployerIP": {
+    "sensitive": false,
+    "type": "string",
+    "value": "35.88.14.54"
+  }
+}

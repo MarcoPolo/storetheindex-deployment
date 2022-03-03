@@ -12,7 +12,6 @@
       deploy.nodes = {
         indexer = {
           # TODO would be ideal if this would just work, but we don't commit the tfstate file
-          # hostname = (builtins.fromJSON (builtins.readFile ./terraform.tfstate)).outputs.ip.value;
           hostname = "34.222.188.35";
           profiles.system = {
             user = "root";
@@ -20,12 +19,11 @@
           };
         };
         deployer = {
-          hostname = "35.84.143.136";
+          hostname = (builtins.fromJSON (builtins.readFile ./terraform-output.json)).deployerIP.value;
           profiles.system = {
             user = "root";
             sshUser = "root";
-            # sshOpts = [ "-i" "/Users/marco/.ssh/marco-storetheindex-deployment" ];
-            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
+            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.deployer;
           };
         };
       };
@@ -33,12 +31,20 @@
         indexer = nixpkgs.lib.nixosSystem
           {
             system = "x86_64-linux";
-            modules = [ ./indexer.nix ];
+            modules = [
+              ./indexer.nix
+            ];
           };
         deployer = nixpkgs.lib.nixosSystem
           {
             system = "x86_64-linux";
-            modules = [ ./deployer.nix ];
+            modules = [
+              ./deployer.nix
+              ./metrics.nix
+              {
+                environment.systemPackages = with self.packages."x86_64-linux"; [ storetheindex provider-load-gen ];
+              }
+            ];
           };
       };
     } //
@@ -46,15 +52,34 @@
       (system:
         let
           pkgs = import nixpkgs { system = system; };
+          tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
+          deployerIP = tf-output.deployerIP.value;
+          ssh-key-path = "~/.ssh/marco-storetheindex-deployment";
+          rsync-to-deployer = pkgs.writeScriptBin "rsync-to-deployer"
+            ''
+              ${pkgs.rsync}/bin/rsync -e 'ssh -i ${ssh-key-path}' -azP --delete --filter=":- .gitignore" --exclude=".direnv" --exclude='.git*' . root@${deployerIP}:~/storetheindex-deployment
+            '';
+          ssh-to-deployer = pkgs.writeScriptBin "ssh-to-deployer"
+            ''
+              ssh -i ${ssh-key-path} root@${deployerIP} $@
+            '';
+          deploy-on-deployer = pkgs.writeScriptBin "deploy-on-deployer"
+            ''
+              ${rsync-to-deployer}/bin/rsync-to-deployer;
+              ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s .#deployer";
+            '';
         in
         {
-          packages.hello = pkgs.hello;
-          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { go = pkgs.go_1_17; };
-          defaultPackage = self.packages.${system}.hello;
+          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { };
+          packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { };
+          defaultPackage = self.packages.${system}.storetheindex;
           devShell = pkgs.mkShell {
             buildInputs = [
               pkgs.terraform_0_14
               deploy-rs.defaultPackage.${system}
+              rsync-to-deployer
+              ssh-to-deployer
+              deploy-on-deployer
             ];
           };
         });

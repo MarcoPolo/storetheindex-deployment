@@ -1,16 +1,18 @@
 { pkgs, lib, ... }:
 pkgs.buildGo117Module rec {
   pname = "storetheindex";
-  version = "0.3.5";
+  version = "load-testing";
+  subPackages = [ "." ];
+  checkPhase = "";
 
   src = pkgs.fetchFromGitHub {
     owner = "filecoin-project";
     repo = "storetheindex";
-    rev = "v${version}";
-    sha256 = "sha256-QbWudQzglMRqeKEBRq3rqzO8ti3H9sxuz/y7L6jQPbk=";
+    rev = "marco/load-testing";
+    sha256 = "sha256-sAk7sy4jw+NQWGbFaZ62gvAupms6G2XruyzqzwYwoow=";
   };
 
-  vendorSha256 = "sha256-+zyRlwxjAfsxZ2tTibC2KMPM5mIR6cA/N82coi+T/K8=";
+  vendorSha256 = "sha256-7ZAAJiADH4K8B7PEUWUvxlnRTVIB4psKAOT+pMnufCA=";
 
   meta = with lib; {
     description = "CID indexer";
