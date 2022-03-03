@@ -16,6 +16,8 @@
 
   environment.systemPackages = with pkgs; [ vim tmux htop ];
 
+  users.users.root.openssh.authorizedKeys.keys = import ./ssh-authorized-keys;
+
   services.nginx =
     {
       enable = true;

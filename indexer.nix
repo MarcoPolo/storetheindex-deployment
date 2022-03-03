@@ -16,6 +16,7 @@
 
   environment.systemPackages = with pkgs; [ vim tmux htop go_1_17 git ];
 
+  users.users.root.openssh.authorizedKeys.keys = import ./ssh-authorized-keys;
 
   environment.etc = {
     load-testing-configs.source = ./load-testing-configs;
