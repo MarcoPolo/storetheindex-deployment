@@ -124,7 +124,8 @@ output gammazeroIndexerIP {
 }
 
 output indexerIP {
-  value = aws_instance.marco-storetheindex-indexer.public_ip
+  # value = aws_instance.marco-storetheindex-indexer.public_ip
+  value = "10.1.1.1"
 }
 
 output deployerIP {
