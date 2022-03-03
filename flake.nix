@@ -91,7 +91,7 @@
         {
           packages.storetheindex = pkgs.callPackage ./storetheindex.nix { src = storetheindex-src; };
           packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { src = storetheindex-src; };
-          defaultPackage = self.packages.${system}.storetheindex;
+          defaultPackage = deploy-on-deployer;
           devShell = pkgs.mkShell {
             INDEXER_IP = indexerIP;
             GZ_INDEXER_IP = gammazeroIndexerIP;
