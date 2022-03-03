@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, repoHash, ... }:
 pkgs.buildGo117Module rec {
   pname = "storetheindex";
   version = "load-testing";
@@ -9,7 +9,7 @@ pkgs.buildGo117Module rec {
     owner = "filecoin-project";
     repo = "storetheindex";
     rev = "marco/load-testing";
-    sha256 = "sha256-sAk7sy4jw+NQWGbFaZ62gvAupms6G2XruyzqzwYwoow=";
+    sha256 = repoHash;
   };
 
   vendorSha256 = "sha256-7ZAAJiADH4K8B7PEUWUvxlnRTVIB4psKAOT+pMnufCA=";

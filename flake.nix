@@ -8,11 +8,15 @@
   };
 
   outputs = { self, nixpkgs, deploy-rs, flake-utils }:
+    let
+      tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
+      deployerIP = tf-output.deployerIP.value;
+      indexerIP = tf-output.indexerIP.value;
+    in
     {
       deploy.nodes = {
         indexer = {
-          # TODO would be ideal if this would just work, but we don't commit the tfstate file
-          hostname = "34.222.188.35";
+          hostname = indexerIP;
           profiles.system = {
             user = "root";
             path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
@@ -33,6 +37,9 @@
             system = "x86_64-linux";
             modules = [
               ./indexer.nix
+              {
+                environment.systemPackages = with self.packages."x86_64-linux"; [ storetheindex provider-load-gen ];
+              }
             ];
           };
         deployer = nixpkgs.lib.nixosSystem
@@ -40,7 +47,7 @@
             system = "x86_64-linux";
             modules = [
               ./deployer.nix
-              ./metrics.nix
+              (import ./metrics.nix indexerIP)
               {
                 environment.systemPackages = with self.packages."x86_64-linux"; [ storetheindex provider-load-gen ];
               }
@@ -52,8 +59,6 @@
       (system:
         let
           pkgs = import nixpkgs { system = system; };
-          tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
-          deployerIP = tf-output.deployerIP.value;
           ssh-key-path = "~/.ssh/marco-storetheindex-deployment";
           rsync-to-deployer = pkgs.writeScriptBin "rsync-to-deployer"
             ''
@@ -65,15 +70,21 @@
             '';
           deploy-on-deployer = pkgs.writeScriptBin "deploy-on-deployer"
             ''
+              terraform output -json > terraform-output.json
               ${rsync-to-deployer}/bin/rsync-to-deployer;
-              ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s .#deployer";
+              ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s $@";
             '';
+          storetheindex-repo-hash = "sha256-nMCH6e6Ug/DQ4nL/w54dKd4iUC6tGVOLScrBdUPjhWc=";
+          # Use fakesha to figure out the real hash.
+          # storetheindex-repo-hash = pkgs.lib.fakeSha256;
         in
         {
-          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { };
-          packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { };
+          packages.storetheindex = pkgs.callPackage ./storetheindex.nix { repoHash = storetheindex-repo-hash; };
+          packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { repoHash = storetheindex-repo-hash; };
           defaultPackage = self.packages.${system}.storetheindex;
           devShell = pkgs.mkShell {
+            INDEXER_IP = deployerIP;
+            DEPLOYER_IP = indexerIP;
             buildInputs = [
               pkgs.terraform_0_14
               deploy-rs.defaultPackage.${system}

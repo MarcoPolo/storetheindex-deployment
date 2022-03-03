@@ -1,10 +1,10 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, repoHash, ... }:
 let
   repo = pkgs.fetchFromGitHub {
     owner = "filecoin-project";
     repo = "storetheindex";
     rev = "marco/load-testing";
-    sha256 = "sha256-sAk7sy4jw+NQWGbFaZ62gvAupms6G2XruyzqzwYwoow=";
+    sha256 = repoHash;
   };
 in
 pkgs.buildGo117Module rec {

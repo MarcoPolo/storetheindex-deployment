@@ -97,6 +97,21 @@ resource "aws_instance" "marco-storetheindex-deployer" {
   }
 }
 
+resource "aws_instance" "marco-storetheindex-indexer" {
+  ami             = module.nixos_image_21_11.ami
+  instance_type   = "i3en.12xlarge"
+  key_name        = aws_key_pair.marco_nix_key.key_name
+
+  security_groups = [aws_security_group.marco-storetheindex-sg.name]
+  root_block_device {
+    volume_size = 50
+  }
+}
+
+output indexerIP {
+  value = aws_instance.marco-storetheindex-indexer.public_ip
+}
+
 output deployerIP {
   value = aws_instance.marco-storetheindex-deployer.public_ip
 }

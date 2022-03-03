@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+indexerIP: { config, pkgs, ... }:
 {
 
   services.grafana = {
@@ -11,6 +11,7 @@
   services.prometheus = {
     enable = true;
     port = 9001;
+    globalConfig.scrape_interval = "15s";
     exporters = {
       node = {
         enable = true;
@@ -29,6 +30,12 @@
         job_name = "storetheindex";
         static_configs = [{
           targets = [ "127.0.0.1:3002" ];
+        }];
+      }
+      {
+        job_name = "indexer-instance";
+        static_configs = [{
+          targets = [ "${indexerIP}:3002" ];
         }];
       }
     ];

@@ -3,5 +3,10 @@
     "sensitive": false,
     "type": "string",
     "value": "35.88.14.54"
+  },
+  "indexerIP": {
+    "sensitive": false,
+    "type": "string",
+    "value": "35.88.9.5"
   }
 }

@@ -14,24 +14,22 @@ terraform apply
 
 # Deploy system configuration
 
+Deploys are run on a remote deployer server. This is for a couple reasons:
+1. Deployer runs the same architecture as the target server, so it can build
+   everything the target needs locally first.
+2. Deployer likely has a much faster network connection to the target server
+   than you do locally.
+
+Note that an initial deployment to a new server will fail because the deployer
+doesn't know to trust the remote server's public key. To check this run
+`ssh-to-deployer ssh $INDEXER_IP echo ok`.
+
 Everything:
 ```
-deploy
+deploy-on-deployer
 ```
 
 Only some node:
 ```
-deploy .#node
-```
-
-
-## If deployment machine arch != target machine arch
-You can use the remote machine as the builder. Replace the values here with the
-current builder's values. You can get the pub key fingerprint by running `base64 -w0 /etc/ssh/ssh_host_ed25519_key.pub`
-```
-SSH_KEY_PATH=/Users/marco/.ssh/marco-storetheindex-deployment \
-BUILDER_IP=35.84.143.136 \
-BUILDER_PUB_KEY="c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUYrVUw4YUtmd3IvN0tpU0hWSkxyVFpxSVF5UUFEOENweWpHYXpHazEwTHggcm9vdEBpcC0xNzItMzEtNTktMjMudXMtd2VzdC0yLmNvbXB1dGUuaW50ZXJuYWw0K"; \
-deploy --ssh-opts="-i $SSH_KEY_PATH" -s -- .#node \
-  --builders "ssh://root@$BUILDER_IP x86_64-linux /Users/marco/.ssh/marco-storetheindex-deployment 4 2 nixos-test,benchmark,big-parallel - $BUILDER_PUB_KEY"
+deploy-on-deployer .#indexer
 ```
