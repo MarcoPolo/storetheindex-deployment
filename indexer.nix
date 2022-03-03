@@ -16,12 +16,10 @@
 
   environment.systemPackages = with pkgs; [ vim tmux htop ];
 
-  services.nginx =
-    {
-      enable = true;
-      recommendedProxySettings = true;
-      recommendedTlsSettings = true;
-    };
+
+  environment.etc = {
+    load-testing-configs.source = ./load-testing-configs;
+  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
