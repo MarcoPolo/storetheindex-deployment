@@ -100,6 +100,16 @@
               ${rsync-to-deployer}/bin/rsync-to-deployer;
               ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s $@";
             '';
+          check-fingerprints = pkgs.writeScriptBin "check-fingerprints"
+            ''
+              echo "Checking fingerprints..."
+              ${update-terraform-output}/bin/update-terraform-output
+              for IP in $(cat terraform-output.json | ${pkgs.jq}/bin/jq '.[] | .value')
+              do
+                echo "Trying to connect to $IP from the deployer node"
+                ${ssh-to-deployer}/bin/ssh-to-deployer -t ssh $IP echo ok
+              done
+            '';
         in
         {
           packages.terraform = pkgs.terraform_0_14;
@@ -117,6 +127,7 @@
               rsync-to-deployer
               ssh-to-deployer
               deploy-on-deployer
+              check-fingerprints
               pkgs.jq
             ];
           };

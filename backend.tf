@@ -5,5 +5,6 @@ terraform {
     key            = "indexer-state"
     region         = "us-west-2"
     dynamodb_table = "terraform-locking"
+    encrypt        = true
   }
 }

@@ -3,10 +3,45 @@
 1. Install NixOS: https://nixos.org/download.html
 1. Enter the dev environment `nix develop`
 1. Initialize terraform `terraform init`
+1. Create a new ssh key for the deployer and to use to connect to these
+   instances. Define the location of that key in `variables.tf`.
 1. Launch the instances of terraform with `terraform apply`
-1. Run `ssh-to-deployer -t ssh $INDEXER_IP echo ok` to have the deployer node learn
-   about the indexer node's public key. (do the same for other nodes as well)
-1. Run `deploy-on-deployer` to deploy everything.
+1. Run `check-fingerprints` to have the deployer node learn about the other
+   node's public key fingerprints (and you can verify them).
+1. Run `deploy-on-deployer` to deploy everything. (It may take a bit on the
+   first run since it needs to build the deploy tool before even starting the
+   deploy.). Now you have an indexer node that's ready to go.
+
+## Starting the indexer
+1. ssh into the indexer with `ssh root@$INDEXER_IP`
+1. Start a tmux session with `tmux`. Optional but very useful.
+1. Setup the indexer with `storetheindex init --pubsub-topic /indexer/ingest/load-test --listen-admin "/ip4/0.0.0.0/tcp/3002"`
+1. Start the indexer process with `storetheindex daemon`
+
+## Starting the provider load generator
+1. ssh into the indexer with `ssh root@INDEXER_IP`. (This should work with any
+   node, but in this example we're generating load from the same node.)
+1. Start the load generator with: `load-testing -config /etc/load-testing-configs/minimal.json`
+
+# Setting up metrics
+The deployer also runs Grafana and Prometheus. Login into grafana by going to
+http://$DEPLOYER_IP. If this is the first time you're connecting to grafana you
+can login with admin/admin, and it'll prompt you to change your password after
+your first login.
+
+You can export the existing indexer dashboard into a JSON file, and then load
+that dashboard to this setup's Grafana instance to get the same dashboard for
+this environment.
+
+You'll need to tell Grafana about the Prometheus data source as well. To do that
+go into Configuration -> Data Sources -> Add Data Source. And then click
+Prometheus. For the http url use `http://localhost:9001` (this is configured in
+`metrics.nix`). Finish by pressing "Save & test". It should say "Data source is
+working".
+
+When using the dashboard you may need to filter for a specific job name. You can
+find the job name information in `metrics.nix`. For the default indexer the job
+name is `indexer-instance`.
 
 # Local environment setup
 Install [NixOS](https://nixos.org/) and enter the correct with `nix develop`.

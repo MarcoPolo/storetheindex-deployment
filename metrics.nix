@@ -27,12 +27,6 @@
         }];
       }
       {
-        job_name = "storetheindex";
-        static_configs = [{
-          targets = [ "127.0.0.1:3002" ];
-        }];
-      }
-      {
         job_name = "indexer-instance";
         static_configs = [{
           targets = [ "${indexerIP}:3002" ];
