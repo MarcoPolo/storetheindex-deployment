@@ -9,6 +9,6 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  profile = "filecoin"
+  profile = "storetheindex"
   region  = "us-west-2"
 }

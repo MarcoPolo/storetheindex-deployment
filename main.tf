@@ -52,14 +52,14 @@ resource "aws_security_group" "marco-storetheindex-sg" {
 }
 
 resource "aws_instance" "marco-storetheindex-deployer" {
-  ami             = module.nixos_image_21_11.ami
-  instance_type   = "c5.xlarge"
-  key_name        = aws_key_pair.marco_nix_key.key_name
+  ami           = module.nixos_image_21_11.ami
+  instance_type = "c5.xlarge"
+  key_name      = aws_key_pair.marco_nix_key.key_name
   root_block_device {
     volume_size = 50
   }
   security_groups = [aws_security_group.marco-storetheindex-sg.name]
-  user_data = <<-USEREOF
+  user_data       = <<-USEREOF
   {pkgs, modulesPath, ...}:
   {
     imports = [ "$${modulesPath}/virtualisation/amazon-image.nix" ];
@@ -79,10 +79,10 @@ resource "aws_instance" "marco-storetheindex-deployer" {
   USEREOF
 
   connection {
-    type     = "ssh"
-    user     = "root"
+    type        = "ssh"
+    user        = "root"
     private_key = file(var.deploy_priv_key_path)
-    host     = self.public_ip
+    host        = self.public_ip
   }
 
   provisioner "remote-exec" {
@@ -97,21 +97,10 @@ resource "aws_instance" "marco-storetheindex-deployer" {
   }
 }
 
-# resource "aws_instance" "marco-storetheindex-indexer" {
-#   ami             = module.nixos_image_21_11.ami
-#   instance_type   = "i3en.xlarge"
-#   key_name        = aws_key_pair.marco_nix_key.key_name
-
-#   security_groups = [aws_security_group.marco-storetheindex-sg.name]
-#   root_block_device {
-#     volume_size = 50
-#   }
-# }
-
-resource "aws_instance" "gammazero-storetheindex-indexer" {
-  ami             = module.nixos_image_21_11.ami
-  instance_type   = "i3en.xlarge"
-  key_name        = aws_key_pair.marco_nix_key.key_name
+resource "aws_instance" "marco-storetheindex-indexer" {
+  ami           = module.nixos_image_21_11.ami
+  instance_type = "i3en.xlarge"
+  key_name      = aws_key_pair.marco_nix_key.key_name
 
   security_groups = [aws_security_group.marco-storetheindex-sg.name]
   root_block_device {
@@ -119,16 +108,27 @@ resource "aws_instance" "gammazero-storetheindex-indexer" {
   }
 }
 
-output gammazeroIndexerIP {
+resource "aws_instance" "gammazero-storetheindex-indexer" {
+  ami           = module.nixos_image_21_11.ami
+  instance_type = "i3en.xlarge"
+  key_name      = aws_key_pair.marco_nix_key.key_name
+
+  security_groups = [aws_security_group.marco-storetheindex-sg.name]
+  root_block_device {
+    volume_size = 50
+  }
+}
+
+output "gammazeroIndexerIP" {
   value = aws_instance.gammazero-storetheindex-indexer.public_ip
 }
 
-output indexerIP {
+output "indexerIP" {
   value = aws_instance.marco-storetheindex-indexer.public_ip
   # Dummy value so that we keep something in the json output. Right now some scripts rely on this value existing.
   # value = "10.1.1.1"
 }
 
-output deployerIP {
+output "deployerIP" {
   value = aws_instance.marco-storetheindex-deployer.public_ip
 }

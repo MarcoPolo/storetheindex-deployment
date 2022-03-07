@@ -2,16 +2,16 @@
   "deployerIP": {
     "sensitive": false,
     "type": "string",
-    "value": "35.88.14.54"
+    "value": "35.84.132.200"
   },
   "gammazeroIndexerIP": {
     "sensitive": false,
     "type": "string",
-    "value": "44.242.165.176"
+    "value": "35.86.209.48"
   },
   "indexerIP": {
     "sensitive": false,
     "type": "string",
-    "value": "35.88.9.5"
+    "value": "35.88.4.147"
   }
 }
