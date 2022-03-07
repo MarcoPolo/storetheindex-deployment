@@ -15,9 +15,9 @@
   outputs = { self, nixpkgs, deploy-rs, flake-utils, storetheindex-src }:
     let
       tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
-      deployerIP = tf-output.deployerIP.value;
-      indexerIP = tf-output.indexerIP.value;
-      gammazeroIndexerIP = tf-output.gammazeroIndexerIP.value;
+      deployerIP = (tf-output.deployerIP.value or "0.0.0.0");
+      indexerIP = (tf-output.indexerIP.value or "0.0.0.0");
+      gammazeroIndexerIP = (tf-output.gammazeroIndexerIP.value or "0.0.0.0");
     in
     {
       deploy.nodes = {
@@ -73,22 +73,36 @@
         let
           pkgs = import nixpkgs { system = system; };
           ssh-key-path = "~/.ssh/marco-storetheindex-deployment";
+          update-terraform-output = pkgs.writeScriptBin "update-terraform-output"
+            ''
+              tmpfile=$(mktemp)
+
+              # Remove any sensitive output
+              ${self.packages.${system}.terraform}/bin/terraform output -json |  ${pkgs.jq}/bin/jq 'with_entries( select(.value | .sensitive == false ) )' > "$tmpfile"
+              # Is there an update?
+              if ! cmp terraform-output.json "$tmpfile" >/dev/null 2>&1
+              then
+                mv $tmpfile terraform-output.json
+              fi
+            '';
           rsync-to-deployer = pkgs.writeScriptBin "rsync-to-deployer"
             ''
               ${pkgs.rsync}/bin/rsync -e 'ssh -i ${ssh-key-path}' -azP --delete --filter=":- .gitignore" --exclude=".direnv" --exclude='.git*' . root@${deployerIP}:~/storetheindex-deployment
             '';
           ssh-to-deployer = pkgs.writeScriptBin "ssh-to-deployer"
             ''
+              ${update-terraform-output}/bin/update-terraform-output
               ssh -i ${ssh-key-path} root@${deployerIP} $@
             '';
           deploy-on-deployer = pkgs.writeScriptBin "deploy-on-deployer"
             ''
-              terraform output -json > terraform-output.json
+              ${update-terraform-output}/bin/update-terraform-output
               ${rsync-to-deployer}/bin/rsync-to-deployer;
               ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s $@";
             '';
         in
         {
+          packages.terraform = pkgs.terraform_0_14;
           packages.storetheindex = pkgs.callPackage ./storetheindex.nix { src = storetheindex-src; };
           packages.provider-load-gen = pkgs.callPackage ./provider-load-gen.nix { src = storetheindex-src; };
           defaultPackage = deploy-on-deployer;
@@ -97,11 +111,13 @@
             GZ_INDEXER_IP = gammazeroIndexerIP;
             DEPLOYER_IP = deployerIP;
             buildInputs = [
-              pkgs.terraform_0_14
+              self.packages.${system}.terraform
               deploy-rs.defaultPackage.${system}
+              update-terraform-output
               rsync-to-deployer
               ssh-to-deployer
               deploy-on-deployer
+              pkgs.jq
             ];
           };
         });

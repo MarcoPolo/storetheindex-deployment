@@ -85,15 +85,17 @@ resource "aws_instance" "marco-storetheindex-deployer" {
     host        = self.public_ip
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "nixos-rebuild switch",
-    ]
-  }
 
   provisioner "file" {
     source      = var.deploy_priv_key_path
     destination = "~/.ssh/id_ed25519"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 0600 ~/.ssh/id_ed25519",
+      "nixos-rebuild switch",
+    ]
   }
 }
 
