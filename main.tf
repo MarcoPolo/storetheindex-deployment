@@ -121,9 +121,9 @@ resource "aws_instance" "marco-storetheindex-indexer" {
 #   }
 # }
 
-output "gammazeroIndexerIP" {
-  value = aws_instance.gammazero-storetheindex-indexer.public_ip
-}
+# output "gammazeroIndexerIP" {
+#   value = aws_instance.gammazero-storetheindex-indexer.public_ip
+# }
 
 output "indexerIP" {
   value = aws_instance.marco-storetheindex-indexer.public_ip

@@ -1,0 +1,9 @@
+{
+  "adsPerSec": 1,
+  "entriesPerAdType": "Normal(1000, 16000)",
+  "entriesPerChunk": 16384,
+  "seed": 1,
+  "isHttp": true,
+  "httpListenAddr": "127.0.0.1:7002",
+  "gossipSubTopic": "/indexer/ingest/load-test"
+}
