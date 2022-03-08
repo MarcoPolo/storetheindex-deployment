@@ -90,7 +90,10 @@ The version of the storetheindex that's deployed on the indexer is defined in
 `flake.nix`. If you want to point it to a different branch you can update the
 attribute of `inputs.storetheindex-src.url`. To update the referenced value
 (branch is the same, but the commit has changed), you can run `nix flake lock
---update-input storetheindex-src`.
+--update-input storetheindex-src`. You may also need to update the
+`vendorSha256` if the dependencies change. To do that change it to the fake sha,
+the build will fail but it will tell you the expected sha. Update the sha to theo
+expected one and it should work on the next build.
 
 Alternatively, you can `git clone` the storetheindex repo on the indexer node
 and manually build and run it with `go`.
