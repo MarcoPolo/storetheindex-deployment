@@ -51,7 +51,9 @@
             modules = [
               ./indexer.nix
               {
-                environment.systemPackages = with self.packages."x86_64-linux"; [ storetheindex provider-load-gen ];
+                environment.systemPackages =
+                  with self.packages."x86_64-linux";
+                  [ storetheindex provider-load-gen ];
               }
             ];
           };
@@ -62,7 +64,9 @@
               ./deployer.nix
               (import ./metrics.nix { inherit indexerIP gammazeroIndexerIP; })
               {
-                environment.systemPackages = with self.packages."x86_64-linux"; [ storetheindex provider-load-gen ];
+                environment.systemPackages =
+                  with self.packages."x86_64-linux";
+                  [ storetheindex provider-load-gen ];
               }
             ];
           };

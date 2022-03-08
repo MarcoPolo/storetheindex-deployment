@@ -83,3 +83,14 @@ Only some node:
 ```
 deploy-on-deployer .#indexer
 ```
+
+# Using a different branch of storetheindex
+
+The version of the storetheindex that's deployed on the indexer is defined in
+`flake.nix`. If you want to point it to a different branch you can update the
+attribute of `inputs.storetheindex-src.url`. To update the referenced value
+(branch is the same, but the commit has changed), you can run `nix flake lock
+--update-input storetheindex-src`.
+
+Alternatively, you can `git clone` the storetheindex repo on the indexer node
+and manually build and run it with `go`.
