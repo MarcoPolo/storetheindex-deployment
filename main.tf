@@ -127,8 +127,6 @@ output "gammazeroIndexerIP" {
 
 output "indexerIP" {
   value = aws_instance.marco-storetheindex-indexer.public_ip
-  # Dummy value so that we keep something in the json output. Right now some scripts rely on this value existing.
-  # value = "10.1.1.1"
 }
 
 output "deployerIP" {
