@@ -5,5 +5,6 @@
   "isHttp": false,
   "seed": 1,
   "listenMultiaddr": "/ip4/0.0.0.0/tcp/7001",
-  "gossipSubTopic": "/indexer/ingest/load-test"
+  "gossipSubTopic": "/indexer/ingest/load-test",
+  "stopAfterNEntries": 6000000
 }
