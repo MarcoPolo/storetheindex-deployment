@@ -14,6 +14,7 @@
 
   outputs = { self, nixpkgs, deploy-rs, flake-utils, storetheindex-src }:
     let
+      ssh-key-path = "~/.ssh/marco-storetheindex-deployment";
       tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
       deployerIP = (tf-output.deployerIP.value or "0.0.0.0");
       indexerIP = (tf-output.indexerIP.value or "0.0.0.0");
@@ -76,7 +77,6 @@
       (system:
         let
           pkgs = import nixpkgs { system = system; };
-          ssh-key-path = "~/.ssh/marco-storetheindex-deployment";
           update-terraform-output = pkgs.writeScriptBin "update-terraform-output"
             ''
               tmpfile=$(mktemp)

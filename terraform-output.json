@@ -2,7 +2,7 @@
   "deployerIP": {
     "sensitive": false,
     "type": "string",
-    "value": "35.87.247.10"
+    "value": "35.87.204.118"
   },
   "indexerIP": {
     "sensitive": false,

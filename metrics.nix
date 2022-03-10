@@ -6,6 +6,23 @@
     port = 2342;
     domain = "metrics.marcopolo.io";
     addr = "127.0.0.1";
+
+    provision = {
+      enable = true;
+      datasources = [{
+        name = "Prometheus";
+        type = "prometheus";
+        url = "http://localhost:9001";
+        isDefault = true;
+      }];
+
+      dashboards = [
+        {
+          name = "Indexer";
+          options.path = "/etc/grafana/dashboards/indexer";
+        }
+      ];
+    };
   };
 
   services.prometheus = {
@@ -27,7 +44,7 @@
         }];
       }
       {
-        job_name = "indexer-instance";
+        job_name = "storetheindex";
         static_configs = [{
           targets = [ "${indexerIP}:3002" ];
         }];

@@ -4,7 +4,7 @@
 1. Enter the dev environment `nix develop`
 1. Initialize terraform `terraform init`
 1. Create a new ssh key for the deployer and to use to connect to these
-   instances. Define the location of that key in `variables.tf`.
+   instances. Define the location of that key in `variables.tf` and `flake.nix`.
 1. Launch the instances of terraform with `terraform apply`
 1. Run `check-fingerprints` to have the deployer node learn about the other
    node's public key fingerprints (and you can verify them).
@@ -28,20 +28,6 @@ The deployer also runs Grafana and Prometheus. Login into grafana by going to
 http://$DEPLOYER_IP. If this is the first time you're connecting to grafana you
 can login with admin/admin, and it'll prompt you to change your password after
 your first login.
-
-You can export the existing indexer dashboard into a JSON file, and then load
-that dashboard to this setup's Grafana instance to get the same dashboard for
-this environment.
-
-You'll need to tell Grafana about the Prometheus data source as well. To do that
-go into Configuration -> Data Sources -> Add Data Source. And then click
-Prometheus. For the http url use `http://localhost:9001` (this is configured in
-`metrics.nix`). Finish by pressing "Save & test". It should say "Data source is
-working".
-
-When using the dashboard you may need to filter for a specific job name. You can
-find the job name information in `metrics.nix`. For the default indexer the job
-name is `indexer-instance`.
 
 # Local environment setup
 Install [NixOS](https://nixos.org/) and enter the correct with `nix develop`.
