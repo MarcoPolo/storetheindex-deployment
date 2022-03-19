@@ -4,6 +4,11 @@
     "type": "string",
     "value": "35.88.1.127"
   },
+  "indexer2IP": {
+    "sensitive": false,
+    "type": "string",
+    "value": "44.232.152.179"
+  },
   "indexerIP": {
     "sensitive": false,
     "type": "string",

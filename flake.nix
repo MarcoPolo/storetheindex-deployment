@@ -18,12 +18,20 @@
       tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
       deployerIP = (tf-output.deployerIP.value or "0.0.0.0");
       indexerIP = (tf-output.indexerIP.value or "0.0.0.0");
+      indexer2IP = (tf-output.indexer2IP.value or "0.0.0.0");
       gammazeroIndexerIP = (tf-output.gammazeroIndexerIP.value or "0.0.0.0");
     in
     {
       deploy.nodes = {
         indexer = {
           hostname = indexerIP;
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
+          };
+        };
+        indexer2 = {
+          hostname = indexer2IP;
           profiles.system = {
             user = "root";
             path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
@@ -122,6 +130,7 @@
           defaultPackage = deploy-on-deployer;
           devShell = pkgs.mkShell {
             INDEXER_IP = indexerIP;
+            INDEXER2_IP = (tf-output.indexer2IP.value or "0.0.0.0");
             GZ_INDEXER_IP = gammazeroIndexerIP;
             DEPLOYER_IP = deployerIP;
             buildInputs = [

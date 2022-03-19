@@ -110,6 +110,93 @@ resource "aws_instance" "marco-storetheindex-indexer" {
   }
 }
 
+resource "aws_instance" "marco-storetheindex-indexer-2" {
+  ami           = module.nixos_image_21_11.ami
+  instance_type = "i3en.xlarge"
+  key_name      = aws_key_pair.marco_nix_key.key_name
+
+  security_groups = [aws_security_group.marco-storetheindex-sg.name]
+  root_block_device {
+    volume_size = 50
+  }
+}
+
+resource "aws_elb" "indexer-lb" {
+  availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c", "us-west-2d"]
+
+  listener {
+    instance_port     = 3000
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "HTTP:3000/"
+    interval            = 30
+  }
+
+  instances = [
+    aws_instance.marco-storetheindex-indexer.id,
+    aws_instance.marco-storetheindex-indexer-2.id
+  ]
+
+  tags = {
+    Name = "loadtester-elb"
+  }
+}
+
+resource "aws_cloudfront_distribution" "indexer_cloudfront" {
+  enabled = true
+  origin {
+    domain_name = aws_elb.indexer-lb.dns_name
+    origin_id   = "lb-${aws_elb.indexer-lb.id}"
+
+
+    custom_origin_config {
+      http_port              = 80
+      origin_protocol_policy = "http-only"
+      # Ignored, but still required
+      https_port           = 443
+      origin_ssl_protocols = ["TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods = ["GET", "HEAD"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+    forwarded_values {
+      query_string = true
+      cookies {
+        forward = "all"
+      }
+    }
+
+    target_origin_id       = "lb-${aws_elb.indexer-lb.id}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+}
+
+
+
 # resource "aws_instance" "gammazero-storetheindex-indexer" {
 #   ami           = module.nixos_image_21_11.ami
 #   instance_type = "i3en.xlarge"
@@ -127,6 +214,10 @@ resource "aws_instance" "marco-storetheindex-indexer" {
 
 output "indexerIP" {
   value = aws_instance.marco-storetheindex-indexer.public_ip
+}
+
+output "indexer2IP" {
+  value = aws_instance.marco-storetheindex-indexer-2.public_ip
 }
 
 output "deployerIP" {
