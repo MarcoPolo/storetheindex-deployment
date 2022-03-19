@@ -8,7 +8,7 @@ pkgs.buildGo117Module rec {
   checkPhase = "";
 
 
-  vendorSha256 = "sha256-BYPPTK5F3ahLl8eRDtIKnssTFMprghyTQUQjZ/zdnoE=";
+  vendorSha256 = "sha256-uV6eLFCp/SfayM8wVY7kKmbNanSLdWNKaEVv54SZy+4=";
   # vendorSha256 = lib.fakeSha256;
 
   meta = with lib; {

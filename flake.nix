@@ -37,13 +37,13 @@
             path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
           };
         };
-        gammazeroIndexer = {
-          hostname = gammazeroIndexerIP;
-          profiles.system = {
-            user = "root";
-            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
-          };
-        };
+        # gammazeroIndexer = {
+        #   hostname = gammazeroIndexerIP;
+        #   profiles.system = {
+        #     user = "root";
+        #     path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.indexer;
+        #   };
+        # };
         deployer = {
           hostname = (builtins.fromJSON (builtins.readFile ./terraform-output.json)).deployerIP.value;
           profiles.system = {

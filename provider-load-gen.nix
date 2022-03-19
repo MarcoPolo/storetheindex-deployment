@@ -6,7 +6,7 @@ pkgs.buildGo117Module rec {
   pname = "provider-load-gen";
   version = "load-testing";
 
-  vendorSha256 = "sha256-rAmuALhAH1y09ybaS2AHXdgXuvRpf8NlJmuBSLnlohw=";
+  vendorSha256 = "sha256-dUYWfXCpjgpuo3jIkjUeSazF1Q3a0ow+rrhHrVcODzY=";
   # vendorSha256 = lib.fakeSha256;
 
   modRoot = "load-testing";
