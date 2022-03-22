@@ -14,6 +14,14 @@
     '';
   };
 
+  security.pam.loginLimits = [{
+    domain = "*";
+    type = "soft";
+    item = "nofile";
+    value = "65536";
+  }];
+
+
   environment.systemPackages = with pkgs; [ vim tmux htop go_1_17 git ];
 
   users.users.root.openssh.authorizedKeys.keys = import ./ssh-authorized-keys;
