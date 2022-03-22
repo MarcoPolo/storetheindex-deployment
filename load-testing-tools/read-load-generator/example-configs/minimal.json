@@ -1,0 +1,8 @@
+{
+  "frequency": 1,
+  "concurrency": 1,
+  "durationSeconds": 1,
+  "maxProviderSeed": 1,
+  "maxEntryNumber": 1,
+  "indexerEndpointUrl": "http://localhost:3000"
+}
