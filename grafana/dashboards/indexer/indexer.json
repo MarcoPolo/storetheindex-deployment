@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 581,
-  "iteration": 1647969758499,
+  "iteration": 1647978571486,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -1372,7 +1372,7 @@
           "refId": "B"
         }
       ],
-      "title": "index_get() latency",
+      "title": "go-indexer-core.Get() latency",
       "type": "timeseries"
     },
     {
@@ -1475,7 +1475,7 @@
           "refId": "B"
         }
       ],
-      "title": "find() latency",
+      "title": "storetheindex.find() latency",
       "type": "timeseries"
     },
     {
@@ -1522,7 +1522,7 @@
           "refId": "A"
         }
       ],
-      "title": "index_get() latency heatmap",
+      "title": "go-indexer-core.Get() latency heatmap",
       "tooltip": {
         "show": true,
         "showHistogram": false
@@ -1550,7 +1550,7 @@
       "dataFormat": "tsbuckets",
       "datasource": {
         "type": "prometheus",
-        "uid": "6H_cd8AMk"
+        "uid": "${Source}"
       },
       "description": "",
       "gridPos": {
@@ -1571,17 +1571,18 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "6H_cd8AMk"
+            "uid": "${Source}"
           },
           "exemplar": true,
           "expr": "# See https://grafana.com/blog/2020/06/23/how-to-visualize-prometheus-histograms-in-grafana/#now-show-me-the-buckets-distribution-over-time\nsum(increase(storetheindex_find_latency_bucket{job=\"$Jobs\"}[$__rate_interval])) by (le)",
+          "format": "heatmap",
           "hide": false,
           "interval": "",
           "legendFormat": "{{le}}",
           "refId": "A"
         }
       ],
-      "title": "find() latency heatmap",
+      "title": "storetheindex.find() latency heatmap",
       "tooltip": {
         "show": true,
         "showHistogram": false
@@ -2249,6 +2250,6 @@
   "timezone": "",
   "title": "providers",
   "uid": "pPROWOD7z",
-  "version": 59,
+  "version": 60,
   "weekStart": ""
 }
