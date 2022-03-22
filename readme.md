@@ -96,3 +96,29 @@ and manually build and run it with `go`.
    CONCURRENT_REQS=3 invoke-read-load-gen < load-testing-tools/read-load-generator/example-configs/minimal.json
    ```
    will run invoke 3 concurrent read load generators with the given config.
+
+## Running read load generator locally
+
+If you set the environment variable `LOCAL_DEBUG=1` then the read load generator
+will assume it's running locally instead of in a Lambda. You can pass it a
+config via stdin. For example:
+```
+LOCAL_DEBUG=1 go run main.go < ./example-configs/minimal.json
+```
+
+## Using heredoc
+
+You can also use a heredoc to specify the config concisely. For example:
+```
+LOCAL_DEBUG=1 go run main.go <<EOF
+{
+  "frequency": 10,
+  "concurrency": 10,
+  "durationSeconds": 1,
+  "maxProviderSeed": 10000,
+  "maxEntryNumber": 10,
+  "indexerEndpointUrl": "http://localhost:3000"
+}
+EOF
+
+```

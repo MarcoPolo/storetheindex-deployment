@@ -163,6 +163,7 @@
 
             echo "Concurrent requests: $CONCURRENT_REQS"
 
+            cd $(git rev-parse --show-toplevel)
             payload=$(${pkgs.coreutils}/bin/base64 -w 0 <&0)
             functionArn=$(${pkgs.terraform_0_14}/bin/terraform output -json | ${pkgs.jq}/bin/jq -r '.["read-load-gen-lambda-arn"].value')
 
