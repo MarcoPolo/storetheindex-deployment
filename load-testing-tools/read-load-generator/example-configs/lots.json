@@ -1,0 +1,8 @@
+{
+  "frequency": 200,
+  "concurrency": 50,
+  "durationSeconds": 180,
+  "maxProviderSeed": 1000,
+  "maxEntryNumber": 1000,
+  "indexerEndpointUrl": "http://35.88.5.3:3000"
+}

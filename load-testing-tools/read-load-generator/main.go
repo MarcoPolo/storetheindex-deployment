@@ -57,8 +57,11 @@ func HandleRequest(ctx context.Context, cfg LoadGenConfig) (string, error) {
 		allErrs = append(allErrs, errs...)
 	}
 
-	randErr := allErrs[rand.Intn(len(allErrs))]
-	return fmt.Sprintf("Ran into %d errs. Random err %v", len(allErrs), randErr), nil
+	var randErr error
+	if len(allErrs) > 0 {
+		randErr = allErrs[rand.Intn(len(allErrs))]
+	}
+	return fmt.Sprintf("Ran into %d errs. Random err: %v", len(allErrs), randErr), nil
 }
 
 func worker(ctx context.Context, cfg *LoadGenConfig) []error {
@@ -83,20 +86,22 @@ func load(ctx context.Context, cfg *LoadGenConfig) error {
 		return err
 	}
 
-	randomProviderSeed := rand.Intn(cfg.MaxProviderSeed)
+	randomProviderSeed := rand.Intn(cfg.MaxProviderSeed) + 1
 	randomEntryNumber := rand.Intn(cfg.MaxEntryNumber)
 	mh, err := generateMH(uint64(randomProviderSeed), uint64(randomEntryNumber))
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Find(context.Background(), mh)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	resp, err := client.Find(ctx, mh)
 	if err != nil {
 		return err
 	}
 
 	if len(resp.MultihashResults) == 0 {
-		return fmt.Errorf("missing multihash")
+		return fmt.Errorf("missing multihash for entryNumber=%v on provider=%v", randomEntryNumber, randomProviderSeed)
 	}
 
 	if resp.MultihashResults[0].Multihash.B58String() != mh.B58String() {
