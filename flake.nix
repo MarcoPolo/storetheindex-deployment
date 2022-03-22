@@ -8,7 +8,7 @@
   };
 
   inputs.storetheindex-src = {
-    url = "github:filecoin-project/storetheindex/marco/load-testing";
+    url = "github:filecoin-project/storetheindex";
     flake = false;
   };
 
