@@ -2,6 +2,8 @@
 1. Clone this repo and `cd` into it.
 1. Install NixOS: https://nixos.org/download.html
 1. Enter the dev environment `nix develop`
+1. Setup your AWS cli with a profile called `storetheindex` for the
+   storetheindex aws account.
 1. Initialize terraform `terraform init`
 1. Create a new ssh key for the deployer and to use to connect to these
    instances. Define the location of that key in `variables.tf` and `flake.nix`.
@@ -77,9 +79,20 @@ The version of the storetheindex that's deployed on the indexer is defined in
 attribute of `inputs.storetheindex-src.url`. To update the referenced value
 (branch is the same, but the commit has changed), you can run `nix flake lock
 --update-input storetheindex-src`. You may also need to update the
-`vendorSha256` if the dependencies change. To do that change it to the fake sha,
-the build will fail but it will tell you the expected sha. Update the sha to theo
-expected one and it should work on the next build.
+`vendorSha256` if the dependencies change. To do that run the
+`update-vendor-sha` command.
 
 Alternatively, you can `git clone` the storetheindex repo on the indexer node
 and manually build and run it with `go`.
+
+# Read load generator
+
+1. `terraform apply` will setup the lambda and ECR repo, and push the container
+   to the ECR
+1. Invoke the lambda with the `invoke-read-load-gen`. The config is passed in
+   via stdin, and it accepts a `CONCURRENT_REQS` environment parameter. For
+   example:
+   ```
+   CONCURRENT_REQS=3 invoke-read-load-gen < load-testing-tools/read-load-generator/example-configs/minimal.json
+   ```
+   will run invoke 3 concurrent read load generators with the given config.

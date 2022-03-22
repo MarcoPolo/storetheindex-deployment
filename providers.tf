@@ -9,6 +9,6 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  profile = "storetheindex"
+  profile = var.profile
   region  = "us-west-2"
 }

@@ -1,3 +1,12 @@
+data "aws_caller_identity" "current" {}
+
+locals {
+  prefix              = "marco"
+  account_id          = data.aws_caller_identity.current.account_id
+  ecr_repository_name = "${local.prefix}-storetheindex-read-load-gen-ecr"
+  ecr_image_tag       = "latest"
+}
+
 module "nixos_image_21_11" {
   source  = "./aws_image_nixos"
   release = "21.11"
@@ -197,6 +206,7 @@ resource "aws_cloudfront_distribution" "indexer_cloudfront" {
 
 
 
+
 # resource "aws_instance" "gammazero-storetheindex-indexer" {
 #   ami           = module.nixos_image_21_11.ami
 #   instance_type = "i3en.xlarge"
@@ -211,6 +221,76 @@ resource "aws_cloudfront_distribution" "indexer_cloudfront" {
 # output "gammazeroIndexerIP" {
 #   value = aws_instance.gammazero-storetheindex-indexer.public_ip
 # }
+
+resource "aws_ecr_repository" "storetheindex-read-load-gen" {
+  name = local.ecr_repository_name
+}
+
+resource "aws_iam_role" "iam_for_storetheindex_read_load_gen_lambda" {
+  name = "iam_for_lambda"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "null_resource" "read_load_gen_ecr_image" {
+  triggers = {
+    file_hashes = jsonencode({
+      for f in fileset("${path.module}/load-testing-tools/read-load-generator", "**") :
+      f => filesha256("${path.module}/load-testing-tools/read-load-generator/${f}")
+    })
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+           aws ecr get-login-password --region ${var.region} --profile ${var.profile} | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.${var.region}.amazonaws.com
+           nix build .#read-load-gen-container
+           docker load < result
+           docker tag storetheindex-read-load-gen:latest ${aws_ecr_repository.storetheindex-read-load-gen.repository_url}:latest
+           docker push ${aws_ecr_repository.storetheindex-read-load-gen.repository_url}:latest
+       EOF
+  }
+}
+
+data "aws_ecr_image" "read_load_gen_container_image" {
+  depends_on = [
+    null_resource.read_load_gen_ecr_image
+  ]
+  repository_name = local.ecr_repository_name
+  image_tag       = local.ecr_image_tag
+}
+
+resource "aws_lambda_function" "storetheindex_read_load_gen_lambda" {
+  function_name = "storetheindex_read_load_gen_lambda"
+  role          = aws_iam_role.iam_for_storetheindex_read_load_gen_lambda.arn
+  architectures = ["arm64"]
+
+  image_uri    = "${aws_ecr_repository.storetheindex-read-load-gen.repository_url}@${data.aws_ecr_image.read_load_gen_container_image.id}"
+  package_type = "Image"
+  timeout      = 60 * 5
+  memory_size  = 512
+}
+
+output "storetheindex-read-load-gen-repo" {
+  value = aws_ecr_repository.storetheindex-read-load-gen.repository_url
+}
+
+output "read-load-gen-lambda-arn" {
+  value = aws_lambda_function.storetheindex_read_load_gen_lambda.arn
+}
 
 output "indexerIP" {
   value = aws_instance.marco-storetheindex-indexer.public_ip

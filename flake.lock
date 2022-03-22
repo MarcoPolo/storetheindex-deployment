@@ -53,6 +53,30 @@
         "type": "github"
       }
     },
+    "nix-prefetch": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1644688005,
+        "narHash": "sha256-Ve2/yvT0Pb/hIxGUjVyxrGQaNQCMNRUgsGYIjEjfb+c=",
+        "owner": "ShamrockLee",
+        "repo": "nix-prefetch",
+        "rev": "9da16d679c67dd80d9c3a2719790045151c3de2f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ShamrockLee",
+        "ref": "experimental-features",
+        "repo": "nix-prefetch",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1646162891,
@@ -73,6 +97,7 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "flake-utils": "flake-utils",
+        "nix-prefetch": "nix-prefetch",
         "nixpkgs": "nixpkgs",
         "storetheindex-src": "storetheindex-src"
       }

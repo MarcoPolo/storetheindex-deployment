@@ -19,7 +19,7 @@
   users.users.root.openssh.authorizedKeys.keys = import ./ssh-authorized-keys;
 
   environment.etc = {
-    load-testing-configs.source = ./load-testing-configs;
+    load-testing-configs.source = ./load-testing-tools/provider-load-generator/load-testing-configs;
   };
 
   # This value determines the NixOS release from which the default

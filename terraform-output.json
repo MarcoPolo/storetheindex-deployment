@@ -13,5 +13,15 @@
     "sensitive": false,
     "type": "string",
     "value": "35.88.5.3"
+  },
+  "read-load-gen-lambda-arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:lambda:us-west-2:407967248065:function:storetheindex_read_load_gen_lambda"
+  },
+  "storetheindex-read-load-gen-repo": {
+    "sensitive": false,
+    "type": "string",
+    "value": "407967248065.dkr.ecr.us-west-2.amazonaws.com/marco-storetheindex-read-load-gen-ecr"
   }
 }

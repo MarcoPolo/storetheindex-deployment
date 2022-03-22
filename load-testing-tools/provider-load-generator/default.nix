@@ -5,11 +5,7 @@ pkgs.buildGo117Module rec {
 
   src = ./.;
 
-  vendorSha256 = "sha256-dUYWfXCpjgpuo3jIkjUeSazF1Q3a0ow+rrhHrVcODzY=";
-  # vendorSha256 = lib.fakeSha256;
-  # vendorSha256 = (import ./vendorSha.nix).sha256;
-
-  modRoot = "load-testing";
+  vendorSha256 = (import ./vendorSha.nix).sha256;
 
   meta = with lib; {
     description = "CID Provider load generator";
@@ -18,8 +14,4 @@ pkgs.buildGo117Module rec {
     maintainers = [ "marcopolo" ];
     platforms = platforms.linux ++ platforms.darwin;
   };
-  postInstall = ''
-    mkdir -p $out/etc/load-testing-configs
-    cp -r ${./load-testing-configs}/* $out/etc/load-testing-configs/
-  '';
 }
