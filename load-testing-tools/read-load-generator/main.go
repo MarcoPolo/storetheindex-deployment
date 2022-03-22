@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -57,11 +58,22 @@ func HandleRequest(ctx context.Context, cfg LoadGenConfig) (string, error) {
 		allErrs = append(allErrs, errs...)
 	}
 
+	var filteredErrs []error
 	var randErr error
+	var missingErrs int
 	if len(allErrs) > 0 {
-		randErr = allErrs[rand.Intn(len(allErrs))]
+		for _, err := range allErrs {
+			if strings.Contains(err.Error(), "missing multihash") {
+				missingErrs++
+			} else {
+				filteredErrs = append(filteredErrs, err)
+			}
+		}
+		if filteredErrs != nil {
+			randErr = filteredErrs[rand.Intn(len(filteredErrs))]
+		}
 	}
-	return fmt.Sprintf("Ran into %d errs. Random err: %v", len(allErrs), randErr), nil
+	return fmt.Sprintf("Missed %d mhs. Ran into %d errs. Random err: %v", missingErrs, len(filteredErrs), randErr), nil
 }
 
 func worker(ctx context.Context, cfg *LoadGenConfig) []error {

@@ -4,5 +4,5 @@
   "durationSeconds": 1,
   "maxProviderSeed": 10000,
   "maxEntryNumber": 10,
-  "indexerEndpointUrl": "http://35.88.5.3:3000"
+  "indexerEndpointUrl": "http://localhost:3000"
 }
