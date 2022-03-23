@@ -65,6 +65,27 @@ func registerMetrics() *promclient.Registry {
 	return registry
 }
 
+type pushGatewayRegisterer struct {
+	url         string
+	serviceName string
+	pusher      *push.Pusher
+}
+
+func (r *pushGatewayRegisterer) Register(c promclient.Collector) error {
+	r.pusher = push.New(r.url, r.serviceName).Collector(c)
+	return nil
+}
+
+func (r *pushGatewayRegisterer) MustRegister(cs ...promclient.Collector) {
+	err := r.Register(cs[0])
+	if err != nil {
+		panic(err)
+	}
+}
+func (r *pushGatewayRegisterer) Unregister(c promclient.Collector) bool {
+	return false
+}
+
 func pushMetrics(ctx context.Context, cfg *LoadGenConfig) func() {
 	if cfg.MetricsPushGateway == "" {
 		return func() {}
@@ -76,14 +97,15 @@ func pushMetrics(ctx context.Context, cfg *LoadGenConfig) func() {
 	serviceName := "read_load_generator_" + fmt.Sprint(instanceID)
 	namespace := "read_load_generator"
 	fmt.Println("ID", instanceID)
+	p := &pushGatewayRegisterer{serviceName: serviceName, url: cfg.MetricsPushGateway}
 	_, err := prometheus.NewExporter(prometheus.Options{
-		Registry:  registry,
-		Namespace: namespace,
+		Registry:   registry,
+		Namespace:  namespace,
+		Registerer: p,
 	})
 	if err != nil {
 		panic("Failed to create exporter")
 	}
-	pusher := push.New(cfg.MetricsPushGateway, serviceName).Gatherer(registry)
 
 	closeCh := make(chan struct{})
 	wg := &sync.WaitGroup{}
@@ -99,12 +121,12 @@ func pushMetrics(ctx context.Context, cfg *LoadGenConfig) func() {
 			select {
 			case <-closeCh:
 				fmt.Println("Pushing metrics")
-				pusher.Push()
+				p.pusher.Push()
 				wg.Done()
 				return
 			case <-ticker.C:
 				fmt.Println("Pushing metrics")
-				pusher.Push()
+				p.pusher.Push()
 			}
 		}
 	}()
