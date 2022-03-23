@@ -201,7 +201,7 @@ func worker(ctx context.Context, id int, cfg *LoadGenConfig) []error {
 }
 
 func find(ctx context.Context, c *http.Client, url string, m multihash.Multihash) (*http.Response, error) {
-	u := fmt.Sprint(url, "/", m.B58String())
+	u := fmt.Sprint(url, "/multihash/", m.B58String())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
