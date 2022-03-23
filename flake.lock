@@ -105,11 +105,11 @@
     "storetheindex-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1647974581,
-        "narHash": "sha256-iBsQh/5BsGWmfZ0IGf8wvlGyhw8UJ+pxIKQBC1D6Umw=",
+        "lastModified": 1647990345,
+        "narHash": "sha256-gaWHGXNVJQF80zU5FA22Ye7MeY9VzmtxJlnxImS8hGk=",
         "owner": "filecoin-project",
         "repo": "storetheindex",
-        "rev": "fb12d59eb32373bd98042222b4bf7db983f6a8ae",
+        "rev": "35f5229b3d67a41fdce47a185aa1c1f3961bc4d1",
         "type": "github"
       },
       "original": {

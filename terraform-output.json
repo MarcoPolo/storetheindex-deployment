@@ -1,8 +1,13 @@
 {
+  "cloudfrontURL": {
+    "sensitive": false,
+    "type": "string",
+    "value": "d122icsftdts4f.cloudfront.net"
+  },
   "deployerIP": {
     "sensitive": false,
     "type": "string",
-    "value": "35.88.1.127"
+    "value": "44.234.109.29"
   },
   "indexer2IP": {
     "sensitive": false,

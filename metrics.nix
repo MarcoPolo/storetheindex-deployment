@@ -1,4 +1,4 @@
-{ indexerIP, gammazeroIndexerIP }: { config, pkgs, ... }:
+{ indexerIP, indexer2IP, gammazeroIndexerIP }: { config, pkgs, ... }:
 {
 
   services.grafana = {
@@ -29,6 +29,8 @@
     enable = true;
     port = 9001;
     globalConfig.scrape_interval = "15s";
+    # To support read-load-generators emitting metrics
+    pushgateway.enable = true;
     exporters = {
       node = {
         enable = true;
@@ -45,14 +47,25 @@
       }
       {
         job_name = "storetheindex";
-        static_configs = [{
-          targets = [ "${indexerIP}:3002" ];
-        }];
+        static_configs = [
+          {
+            targets = [ "${indexerIP}:3002" ];
+          }
+          {
+            targets = [ "${indexer2IP}:3002" ];
+          }
+        ];
       }
       {
         job_name = "gammazero-indexer-instance";
         static_configs = [{
           targets = [ "${gammazeroIndexerIP}:3002" ];
+        }];
+      }
+      {
+        job_name = "read-load-generator";
+        static_configs = [{
+          targets = [ "localhost:9091" ];
         }];
       }
     ];

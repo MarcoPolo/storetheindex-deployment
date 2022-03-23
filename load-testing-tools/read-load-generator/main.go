@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -20,7 +21,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	httpfinderclient "github.com/filecoin-project/storetheindex/api/v0/finder/client/http"
 	"github.com/multiformats/go-multihash"
 	"github.com/multiformats/go-varint"
 	"golang.org/x/time/rate"
@@ -47,12 +47,12 @@ func init() {
 }
 
 var FindLatency = stats.Float64("find/latency", "Time to respond to a find request", stats.UnitMilliseconds)
-var GotResponse, _ = tag.NewKey("gotResponse")
+var StatusCode, _ = tag.NewKey("statusCode")
 var Instance, _ = tag.NewKey("instance")
 var findLatencyView = &view.View{
 	Measure:     FindLatency,
 	Aggregation: view.Distribution(0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000),
-	TagKeys:     []tag.Key{GotResponse, Instance},
+	TagKeys:     []tag.Key{StatusCode, Instance},
 }
 
 func registerMetrics() *promclient.Registry {
@@ -185,6 +185,7 @@ func HandleRequest(ctx context.Context, cfg LoadGenConfig) (string, error) {
 
 func worker(ctx context.Context, id int, cfg *LoadGenConfig) []error {
 	l := rate.NewLimiter(rate.Limit(cfg.Frequency), 1)
+	c := &http.Client{}
 	var errs []error
 	for {
 		err := l.Wait(ctx)
@@ -192,18 +193,25 @@ func worker(ctx context.Context, id int, cfg *LoadGenConfig) []error {
 			return errs
 		}
 
-		err = load(ctx, id, cfg)
+		err = load(ctx, id, c, cfg)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
 }
 
-func load(ctx context.Context, workerID int, cfg *LoadGenConfig) error {
-	client, err := httpfinderclient.New(cfg.IndexerEndpointUrl)
+func find(ctx context.Context, c *http.Client, url string, m multihash.Multihash) (*http.Response, error) {
+	u := fmt.Sprint(url, "/", m.B58String())
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+	return c.Do(req)
+}
+
+func load(ctx context.Context, workerID int, c *http.Client, cfg *LoadGenConfig) error {
 
 	randomProviderSeed := rand.Intn(cfg.MaxProviderSeed) + 1
 	randomEntryNumber := rand.Intn(cfg.MaxEntryNumber)
@@ -215,29 +223,27 @@ func load(ctx context.Context, workerID int, cfg *LoadGenConfig) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second/time.Duration(cfg.Frequency))
 	defer cancel()
 	start := time.Now()
-	gotResponse := false
+	var resp *http.Response
 	defer func() {
+		statusCode := 0
+		if resp != nil {
+			statusCode = resp.StatusCode
+		}
 		msSinceStart := time.Since(start).Milliseconds()
 		stats.RecordWithOptions(context.Background(),
 			stats.WithTags(
-				tag.Insert(GotResponse, fmt.Sprintf("%v", gotResponse)),
-				// tag.Insert(Instance, fmt.Sprintf("%v_%d", instanceID, workerID)),
+				tag.Insert(StatusCode, fmt.Sprintf("%v", statusCode)),
 				tag.Insert(Instance, fmt.Sprintf("%v", instanceID)),
 			),
 			stats.WithMeasurements(FindLatency.M(float64(msSinceStart))))
 	}()
-	resp, err := client.Find(ctx, mh)
+	resp, err = find(ctx, c, cfg.IndexerEndpointUrl, mh)
 	if err != nil {
 		return err
 	}
-	gotResponse = true
 
-	if len(resp.MultihashResults) == 0 {
+	if resp.StatusCode == http.StatusNotFound {
 		return fmt.Errorf("missing multihash for entryNumber=%v on provider=%v", randomEntryNumber, randomProviderSeed)
-	}
-
-	if resp.MultihashResults[0].Multihash.B58String() != mh.B58String() {
-		return fmt.Errorf("unexpected multihash")
 	}
 
 	return nil

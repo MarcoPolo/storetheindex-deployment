@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 581,
-  "iteration": 1647978571486,
+  "iteration": 1647982192571,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -1070,7 +1070,7 @@
         "type": "prometheus",
         "uid": "${Source}"
       },
-      "description": "How long it took to get a value from the DB",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1120,7 +1120,32 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "storetheindex-0-storetheindex-0"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -1147,7 +1172,7 @@
             "uid": "${Source}"
           },
           "exemplar": true,
-          "expr": "increase(storetheindex_core_get_index_latency_count{job=\"$Jobs\"}[$__rate_interval])",
+          "expr": "rate(storetheindex_core_get_index_latency_count{job=\"$Jobs\"}[$__rate_interval])",
           "interval": "",
           "legendFormat": "$Jobs",
           "refId": "A"
@@ -1158,14 +1183,14 @@
             "uid": "${Source}"
           },
           "exemplar": true,
-          "expr": "increase(storetheindex_core_get_index_latency_count{job=\"$Jobs\"}[$__rate_interval] offset 7d)",
+          "expr": "rate(storetheindex_core_get_index_latency_count{job=\"$Jobs\"}[$__rate_interval] offset 7d)",
           "hide": false,
           "interval": "",
           "legendFormat": "$Jobs 1 week ago",
           "refId": "B"
         }
       ],
-      "title": "go-indexer-core.Get()",
+      "title": "go-indexer-core.Get() rate",
       "type": "timeseries"
     },
     {
@@ -1222,7 +1247,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "storetheindex-0-storetheindex-0"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -1249,7 +1299,7 @@
             "uid": "${Source}"
           },
           "exemplar": true,
-          "expr": "increase(storetheindex_find_latency_count{job=\"$Jobs\"}[$__rate_interval])\n",
+          "expr": "rate(storetheindex_find_latency_count{job=\"$Jobs\"}[$__rate_interval])\n",
           "interval": "",
           "legendFormat": "$Jobs",
           "refId": "A"
@@ -1260,14 +1310,14 @@
             "uid": "${Source}"
           },
           "exemplar": true,
-          "expr": "increase(storetheindex_find_latency_count{job=\"$Jobs\"}[$__rate_interval] offset 7d)\n",
+          "expr": "rate(storetheindex_find_latency_count{job=\"$Jobs\"}[$__rate_interval] offset 7d)\n",
           "hide": false,
           "interval": "",
           "legendFormat": "$Jobs 1 week ago",
           "refId": "B"
         }
       ],
-      "title": "storetheindex.find() requests",
+      "title": "storetheindex.find() request rate",
       "type": "timeseries"
     },
     {
@@ -1545,7 +1595,7 @@
         "colorScale": "sqrt",
         "colorScheme": "interpolateOranges",
         "exponent": 0.5,
-        "mode": "spectrum"
+        "mode": "opacity"
       },
       "dataFormat": "tsbuckets",
       "datasource": {
@@ -2243,13 +2293,13 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "providers",
   "uid": "pPROWOD7z",
-  "version": 60,
+  "version": 62,
   "weekStart": ""
 }

@@ -122,3 +122,9 @@ LOCAL_DEBUG=1 go run main.go <<EOF
 EOF
 
 ```
+
+# Debugging
+## Stuck around 1k connections
+You may have to restart the indexer to update the soft file limit. To check if
+this is the problem run `ulimit -Sn`. If that's ~1k that's the issue. Restarting
+it should reload the limit to ~64k.

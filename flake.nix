@@ -77,7 +77,7 @@
             system = "x86_64-linux";
             modules = [
               ./deployer.nix
-              (import ./metrics.nix { inherit indexerIP gammazeroIndexerIP; })
+              (import ./metrics.nix { inherit indexerIP indexer2IP gammazeroIndexerIP; })
               {
                 environment.systemPackages =
                   with self.packages."x86_64-linux";
@@ -196,29 +196,24 @@
           packages.storetheindex = pkgs.callPackage ./storetheindex { src = storetheindex-src; };
           packages.provider-load-gen = pkgs.callPackage ./load-testing-tools/provider-load-generator { };
           packages.read-load-gen = pkgs.callPackage ./load-testing-tools/read-load-generator { };
-          packages.read-load-gen-container = pkgs.dockerTools.buildImage {
-            name = "storetheindex-read-load-gen";
-            tag = "latest";
+          packages.read-load-gen-container = (
+            let
+              system = "aarch64-linux";
+              pkgs = import nixpkgs { inherit system; };
+            in
+            pkgs.dockerTools.buildLayeredImage {
+              name = "storetheindex-read-load-gen";
+              tag = "latest";
 
-            contents = pkgs.callPackage ./load-testing-tools/read-load-generator {
-              pkgs = import nixpkgs { system = "aarch64-linux"; };
-            };
-            config = {
-              Cmd = [ "/bin/read-load-generator" ];
-            };
-          };
-          packages.load-gen-container = pkgs.dockerTools.buildImage {
-            name = "storetheindex-load-gen";
-            tag = "latest";
-
-            contents = pkgs.callPackage ./provider-load-gen.nix {
-              src = storetheindex-src;
-              pkgs = import nixpkgs { system = "aarch64-linux"; };
-            };
-            config = {
-              Cmd = [ "/bin/load-testing" ];
-            };
-          };
+              contents = [
+                pkgs.cacert
+                self.packages.${system}.read-load-gen
+              ];
+              config = {
+                Cmd = [ "/bin/read-load-generator" ];
+              };
+            }
+          );
           packages.nix-prefetch = pkgs.callPackage (import "${nix-prefetch}/default.nix") {
             nix = pkgs.nix_2_4;
           };

@@ -51,6 +51,14 @@ resource "aws_security_group" "marco-storetheindex-sg" {
     to_port   = 80
     protocol  = "tcp"
   }
+  ingress {
+    cidr_blocks = [
+      "0.0.0.0/0"
+    ]
+    from_port = 9091
+    to_port   = 9091
+    protocol  = "tcp"
+  }
   // Terraform removes the default rule
   egress {
     from_port   = 0
@@ -62,10 +70,10 @@ resource "aws_security_group" "marco-storetheindex-sg" {
 
 resource "aws_instance" "marco-storetheindex-deployer" {
   ami           = module.nixos_image_21_11.ami
-  instance_type = "c5.xlarge"
+  instance_type = "c5.2xlarge"
   key_name      = aws_key_pair.marco_nix_key.key_name
   root_block_device {
-    volume_size = 50
+    volume_size = 256
   }
   security_groups = [aws_security_group.marco-storetheindex-sg.name]
   user_data       = <<-USEREOF
@@ -302,4 +310,8 @@ output "indexer2IP" {
 
 output "deployerIP" {
   value = aws_instance.marco-storetheindex-deployer.public_ip
+}
+
+output "cloudfrontURL" {
+  value = aws_cloudfront_distribution.indexer_cloudfront.domain_name
 }
