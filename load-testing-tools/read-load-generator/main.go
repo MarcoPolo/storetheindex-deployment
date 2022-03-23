@@ -11,6 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"contrib.go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
+
+	promclient "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	httpfinderclient "github.com/filecoin-project/storetheindex/api/v0/finder/client/http"
 	"github.com/multiformats/go-multihash"
@@ -28,6 +36,80 @@ type LoadGenConfig struct {
 	MaxProviderSeed    int    `json:"maxProviderSeed"`
 	MaxEntryNumber     int    `json:"maxEntryNumber"`
 	IndexerEndpointUrl string `json:"indexerEndpointUrl"`
+	MetricsPushGateway string `json:"metricsPushGateway"`
+}
+
+var instanceID int64
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+	instanceID = rand.Int63()
+}
+
+var FindLatency = stats.Float64("find/latency", "Time to respond to a find request", stats.UnitMilliseconds)
+var GotResponse, _ = tag.NewKey("gotResponse")
+var Instance, _ = tag.NewKey("instance")
+var findLatencyView = &view.View{
+	Measure:     FindLatency,
+	Aggregation: view.Distribution(0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000),
+	TagKeys:     []tag.Key{GotResponse, Instance},
+}
+
+func registerMetrics() *promclient.Registry {
+	view.Register(findLatencyView)
+
+	registry, ok := promclient.DefaultRegisterer.(*promclient.Registry)
+	if !ok {
+		fmt.Printf("failed to export default prometheus registry; some metrics will be unavailable; unexpected type: %T\n", promclient.DefaultRegisterer)
+	}
+	return registry
+}
+
+func pushMetrics(ctx context.Context, cfg *LoadGenConfig) func() {
+	if cfg.MetricsPushGateway == "" {
+		return func() {}
+	}
+
+	registry := registerMetrics()
+
+	os.Hostname()
+	serviceName := "read_load_generator_" + fmt.Sprint(instanceID)
+	namespace := "read_load_generator"
+	fmt.Println("ID", instanceID)
+	_, err := prometheus.NewExporter(prometheus.Options{
+		Registry:  registry,
+		Namespace: namespace,
+	})
+	if err != nil {
+		panic("Failed to create exporter")
+	}
+	pusher := push.New(cfg.MetricsPushGateway, serviceName).Gatherer(registry)
+
+	closeCh := make(chan struct{})
+	wg := &sync.WaitGroup{}
+	closeFn := func() {
+		close(closeCh)
+		wg.Wait()
+	}
+
+	wg.Add(1)
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		for {
+			select {
+			case <-closeCh:
+				fmt.Println("Pushing metrics")
+				pusher.Push()
+				wg.Done()
+				return
+			case <-ticker.C:
+				fmt.Println("Pushing metrics")
+				pusher.Push()
+			}
+		}
+	}()
+
+	return closeFn
 }
 
 func HandleRequest(ctx context.Context, cfg LoadGenConfig) (string, error) {
@@ -36,17 +118,19 @@ func HandleRequest(ctx context.Context, cfg LoadGenConfig) (string, error) {
 	defer cancel()
 
 	fmt.Println("Starting load test")
+	closePushMetrics := pushMetrics(ctx, &cfg)
+	defer closePushMetrics()
 
 	allErrsCh := make(chan []error, cfg.Concurrency)
 
 	wg := &sync.WaitGroup{}
 	for i := 0; i < cfg.Concurrency; i++ {
 		wg.Add(1)
-		go func() {
-			errs := worker(ctx, &cfg)
+		go func(id int) {
+			errs := worker(ctx, id, &cfg)
 			allErrsCh <- errs
 			wg.Done()
-		}()
+		}(i)
 	}
 
 	wg.Wait()
@@ -73,10 +157,11 @@ func HandleRequest(ctx context.Context, cfg LoadGenConfig) (string, error) {
 			randErr = filteredErrs[rand.Intn(len(filteredErrs))]
 		}
 	}
+
 	return fmt.Sprintf("Missed %d mhs. Ran into %d errs. Random err: %v", missingErrs, len(filteredErrs), randErr), nil
 }
 
-func worker(ctx context.Context, cfg *LoadGenConfig) []error {
+func worker(ctx context.Context, id int, cfg *LoadGenConfig) []error {
 	l := rate.NewLimiter(rate.Limit(cfg.Frequency), 1)
 	var errs []error
 	for {
@@ -85,14 +170,14 @@ func worker(ctx context.Context, cfg *LoadGenConfig) []error {
 			return errs
 		}
 
-		err = load(ctx, cfg)
+		err = load(ctx, id, cfg)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
 }
 
-func load(ctx context.Context, cfg *LoadGenConfig) error {
+func load(ctx context.Context, workerID int, cfg *LoadGenConfig) error {
 	client, err := httpfinderclient.New(cfg.IndexerEndpointUrl)
 	if err != nil {
 		return err
@@ -105,12 +190,25 @@ func load(ctx context.Context, cfg *LoadGenConfig) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Second/time.Duration(cfg.Frequency))
 	defer cancel()
+	start := time.Now()
+	gotResponse := false
+	defer func() {
+		msSinceStart := time.Since(start).Milliseconds()
+		stats.RecordWithOptions(context.Background(),
+			stats.WithTags(
+				tag.Insert(GotResponse, fmt.Sprintf("%v", gotResponse)),
+				// tag.Insert(Instance, fmt.Sprintf("%v_%d", instanceID, workerID)),
+				tag.Insert(Instance, fmt.Sprintf("%v", instanceID)),
+			),
+			stats.WithMeasurements(FindLatency.M(float64(msSinceStart))))
+	}()
 	resp, err := client.Find(ctx, mh)
 	if err != nil {
 		return err
 	}
+	gotResponse = true
 
 	if len(resp.MultihashResults) == 0 {
 		return fmt.Errorf("missing multihash for entryNumber=%v on provider=%v", randomEntryNumber, randomProviderSeed)
