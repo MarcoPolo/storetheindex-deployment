@@ -21,69 +21,14 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 6,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "cards": {},
-      "color": {
-        "cardColor": "#b4ff00",
-        "colorScale": "sqrt",
-        "colorScheme": "interpolateOranges",
-        "exponent": 0.5,
-        "mode": "opacity"
-      },
-      "dataFormat": "tsbuckets",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "heatmap": {},
-      "hideZeroBuckets": false,
-      "highlightCards": true,
-      "id": 6,
-      "legend": {
-        "show": false
-      },
-      "reverseYBuckets": false,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": true,
-          "expr": "# See https://grafana.com/blog/2020/06/23/how-to-visualize-prometheus-histograms-in-grafana/#now-show-me-the-buckets-distribution-over-time\nsum(increase(read_load_generator_find_latency_bucket{}[$__rate_interval])) by (le)",
-          "format": "heatmap",
-          "interval": "",
-          "legendFormat": "{{le}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Response latency heatmap",
-      "tooltip": {
-        "show": true,
-        "showHistogram": false
-      },
-      "type": "heatmap",
-      "xAxis": {
-        "show": true
-      },
-      "yAxis": {
-        "format": "ms",
-        "logBase": 1,
-        "show": true
-      },
-      "yBucketBound": "auto"
-    },
-    {
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisLabel": "",
@@ -128,13 +73,13 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Failed response"
+              "options": "{statusCode=\"404\"}"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "red",
+                  "fixedColor": "yellow",
                   "mode": "fixed"
                 }
               }
@@ -143,7 +88,22 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Got response"
+              "options": "{statusCode=\"0\"}"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "{statusCode=\"200\"}"
             },
             "properties": [
               {
@@ -158,9 +118,9 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
+        "h": 14,
+        "w": 24,
+        "x": 0,
         "y": 0
       },
       "id": 4,
@@ -182,29 +142,71 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "sum(rate(read_load_generator_find_latency_count{gotResponse=\"true\"}[$__rate_interval]))",
+          "expr": "sum by (statusCode)(rate(read_load_generator_find_latency_count[$__rate_interval]))",
           "interval": "",
-          "legendFormat": "Got response",
+          "legendFormat": "",
           "refId": "A"
-        },
+        }
+      ],
+      "title": "Request rate by gotResponse",
+      "type": "timeseries"
+    },
+    {
+      "cards": {},
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateOranges",
+        "exponent": 0.5,
+        "mode": "opacity"
+      },
+      "dataFormat": "tsbuckets",
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "heatmap": {},
+      "hideZeroBuckets": false,
+      "highlightCards": true,
+      "id": 6,
+      "legend": {
+        "show": false
+      },
+      "reverseYBuckets": false,
+      "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "sum(rate(read_load_generator_find_latency_count{gotResponse=\"false\"}[$__rate_interval]))",
-          "hide": false,
+          "expr": "# See https://grafana.com/blog/2020/06/23/how-to-visualize-prometheus-histograms-in-grafana/#now-show-me-the-buckets-distribution-over-time\nsum(increase(read_load_generator_find_latency_bucket{}[$__rate_interval])) by (le)",
+          "format": "heatmap",
           "interval": "",
-          "legendFormat": "Failed response",
-          "refId": "B"
+          "legendFormat": "{{le}}",
+          "refId": "A"
         }
       ],
-      "title": "Request rate by gotResponse",
-      "type": "timeseries"
+      "title": "Response latency heatmap",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "yAxis": {
+        "format": "ms",
+        "logBase": 1,
+        "show": true
+      },
+      "yBucketBound": "auto"
     }
   ],
-  "refresh": false,
+  "refresh": "10s",
   "schemaVersion": 35,
   "style": "dark",
   "tags": [],
@@ -212,13 +214,13 @@
     "list": []
   },
   "time": {
-    "from": "2022-03-23T06:36:37.074Z",
-    "to": "2022-03-23T07:22:25.384Z"
+    "from": "now-15m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Read Load Generator",
   "uid": "rXfOj9P7k",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }

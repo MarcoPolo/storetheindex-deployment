@@ -90,12 +90,8 @@ and manually build and run it with `go`.
 1. `terraform apply` will setup the lambda and ECR repo, and push the container
    to the ECR.
 1. Invoke the lambda with the `invoke-read-load-gen`. The config is passed in
-   via stdin, and it accepts a `CONCURRENT_REQS` environment parameter. For
-   example:
-   ```
-   CONCURRENT_REQS=3 invoke-read-load-gen < load-testing-tools/read-load-generator/example-configs/minimal.json
-   ```
-   will run invoke 3 concurrent read load generators with the given config.
+   via stdin, and it accepts a `CONCURRENT_REQS` environment parameter. See
+   examples below for an example.
 
 Note that the workers use a prometheus push gateway to push metrics to
 prometheus, which means that the deployer node should be up if you want to see
@@ -107,15 +103,15 @@ Runnign a read load test with 100 concurrent workers each making 500 concurrent
 requests a second (50k rps).
 
 ```bash
-CONCURRENT_REQS=100 invoke-read-load-gen <<EOF
+CONCURRENT_REQS=10 invoke-read-load-gen <<EOF
 {
   "frequency": 1,
-  "concurrency": 500,
-  "durationSeconds": 360,
+  "concurrency": 10,
+  "durationSeconds": 60,
   "maxProviderSeed": 1000000,
   "maxEntryNumber": 100,
-  "metricsPushGateway": "http://44.234.109.29:9091",
-  "indexerEndpointUrl": "https://d3pmvzacpjhvv9.cloudfront.net"
+  "metricsPushGateway": "http://$DEPLOYER_IP:9091",
+  "indexerEndpointUrl": "https://d3pmvzacpjhvv9.cloudfront.net/"
 }
 EOF
 ```

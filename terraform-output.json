@@ -2,7 +2,7 @@
   "deployerIP": {
     "sensitive": false,
     "type": "string",
-    "value": "44.234.109.29"
+    "value": "34.222.189.189"
   },
   "read-load-gen-lambda-arn": {
     "sensitive": false,
