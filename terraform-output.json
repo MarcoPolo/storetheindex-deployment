@@ -1,23 +1,8 @@
 {
-  "cloudfrontURL": {
-    "sensitive": false,
-    "type": "string",
-    "value": "d122icsftdts4f.cloudfront.net"
-  },
   "deployerIP": {
     "sensitive": false,
     "type": "string",
     "value": "44.234.109.29"
-  },
-  "indexer2IP": {
-    "sensitive": false,
-    "type": "string",
-    "value": "44.232.152.179"
-  },
-  "indexerIP": {
-    "sensitive": false,
-    "type": "string",
-    "value": "35.88.5.3"
   },
   "read-load-gen-lambda-arn": {
     "sensitive": false,

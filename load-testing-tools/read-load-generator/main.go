@@ -32,7 +32,9 @@ type LoadGenConfig struct {
 	// Concurrency specifies the number of concurrent requests
 	Concurrency int `json:"concurrency"`
 	// DurationSeconds specifies the total duration of the load test
-	DurationSeconds    int    `json:"durationSeconds"`
+	DurationSeconds int `json:"durationSeconds"`
+	// The read load generator will generate a random multihash by using a random
+	// int between 0 and this value and 0 and the MaxEntryNumber
 	MaxProviderSeed    int    `json:"maxProviderSeed"`
 	MaxEntryNumber     int    `json:"maxEntryNumber"`
 	IndexerEndpointUrl string `json:"indexerEndpointUrl"`

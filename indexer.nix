@@ -30,6 +30,15 @@
     provider-load-testing-configs.source = ./load-testing-tools/provider-load-generator/example-configs;
   };
 
+
+
+  fileSystems."/data" = {
+    # Amazon EC2 NVMe Instance Storage
+    device = "/dev/nvme1n1";
+    fsType = "ext4";
+    autoFormat = true;
+  };
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave

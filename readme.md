@@ -88,7 +88,7 @@ and manually build and run it with `go`.
 # Read load generator
 
 1. `terraform apply` will setup the lambda and ECR repo, and push the container
-   to the ECR
+   to the ECR.
 1. Invoke the lambda with the `invoke-read-load-gen`. The config is passed in
    via stdin, and it accepts a `CONCURRENT_REQS` environment parameter. For
    example:
@@ -96,6 +96,29 @@ and manually build and run it with `go`.
    CONCURRENT_REQS=3 invoke-read-load-gen < load-testing-tools/read-load-generator/example-configs/minimal.json
    ```
    will run invoke 3 concurrent read load generators with the given config.
+
+Note that the workers use a prometheus push gateway to push metrics to
+prometheus, which means that the deployer node should be up if you want to see
+metrics from the read load generator side.
+
+## Examples
+
+Runnign a read load test with 100 concurrent workers each making 500 concurrent
+requests a second (50k rps).
+
+```bash
+CONCURRENT_REQS=100 invoke-read-load-gen <<EOF
+{
+  "frequency": 1,
+  "concurrency": 500,
+  "durationSeconds": 360,
+  "maxProviderSeed": 1000000,
+  "maxEntryNumber": 100,
+  "metricsPushGateway": "http://44.234.109.29:9091",
+  "indexerEndpointUrl": "https://d3pmvzacpjhvv9.cloudfront.net"
+}
+EOF
+```
 
 ## Running read load generator locally
 
@@ -108,7 +131,7 @@ LOCAL_DEBUG=1 go run main.go < ./example-configs/minimal.json
 
 ## Using heredoc
 
-You can also use a heredoc to specify the config concisely. For example:
+You can also use a heredoc to specify the config. For example:
 ```
 LOCAL_DEBUG=1 go run main.go <<EOF
 {
@@ -117,6 +140,7 @@ LOCAL_DEBUG=1 go run main.go <<EOF
   "durationSeconds": 1,
   "maxProviderSeed": 10000,
   "maxEntryNumber": 10,
+  "metricsPushGateway": "http://44.234.109.29:9091",
   "indexerEndpointUrl": "http://localhost:3000"
 }
 EOF

@@ -91,38 +91,40 @@
       (system:
         let
           pkgs = import nixpkgs { system = system; };
+          jq = "${pkgs.jq}/bin/jq";
           update-terraform-output = pkgs.writeScriptBin "update-terraform-output"
             ''
               tmpfile=$(mktemp)
 
               # Remove any sensitive output
-              ${self.packages.${system}.terraform}/bin/terraform output -json |  ${pkgs.jq}/bin/jq 'with_entries( select(.value | .sensitive == false ) )' > "$tmpfile"
+              ${self.packages.${system}.terraform}/bin/terraform output -json |  ${jq} 'with_entries( select(.value | .sensitive == false ) )' > "$tmpfile"
               # Is there an update?
               if ! cmp terraform-output.json "$tmpfile" >/dev/null 2>&1
               then
                 mv $tmpfile terraform-output.json
               fi
+
+              cat terraform-output.json
             '';
           rsync-to-deployer = pkgs.writeScriptBin "rsync-to-deployer"
             ''
-              ${pkgs.rsync}/bin/rsync -e 'ssh -i ${ssh-key-path}' -azP --delete --filter=":- .gitignore" --exclude=".direnv" --exclude='.git*' . root@${deployerIP}:~/storetheindex-deployment
+              deployerIP=$(update-terraform-output | jq -r .deployerIP.value)
+              ${pkgs.rsync}/bin/rsync -e 'ssh -i ${ssh-key-path}' -azP --delete --filter=":- .gitignore" --exclude=".direnv" --exclude='.git*' . root@$deployerIP:~/storetheindex-deployment
             '';
           ssh-to-deployer = pkgs.writeScriptBin "ssh-to-deployer"
             ''
-              ${update-terraform-output}/bin/update-terraform-output
-              ssh -i ${ssh-key-path} root@${deployerIP} $@
+              deployerIP=$(update-terraform-output | jq -r .deployerIP.value)
+              ssh -i ${ssh-key-path} root@$deployerIP $@
             '';
           deploy-on-deployer = pkgs.writeScriptBin "deploy-on-deployer"
             ''
-              ${update-terraform-output}/bin/update-terraform-output
               ${rsync-to-deployer}/bin/rsync-to-deployer;
               ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix develop --command deploy -s $@";
             '';
           check-fingerprints = pkgs.writeScriptBin "check-fingerprints"
             ''
               echo "Checking fingerprints..."
-              ${update-terraform-output}/bin/update-terraform-output
-              for IP in $(cat terraform-output.json | ${pkgs.jq}/bin/jq '.[] | .value')
+              for IP in $(${update-terraform-output}/bin/update-terraform-output | ${jq} '.[] | .value')
               do
                 echo "Trying to connect to $IP from the deployer node"
                 ${ssh-to-deployer}/bin/ssh-to-deployer -t ssh $IP echo ok
@@ -165,7 +167,7 @@
 
             cd $(git rev-parse --show-toplevel)
             payload=$(${pkgs.coreutils}/bin/base64 -w 0 <&0)
-            functionArn=$(${pkgs.terraform_0_14}/bin/terraform output -json | ${pkgs.jq}/bin/jq -r '.["read-load-gen-lambda-arn"].value')
+            functionArn=$(${pkgs.terraform_0_14}/bin/terraform output -json | ${jq} -r '.["read-load-gen-lambda-arn"].value')
 
             for i in $(seq 1 $CONCURRENT_REQS);
             do
@@ -196,24 +198,39 @@
           packages.storetheindex = pkgs.callPackage ./storetheindex { src = storetheindex-src; };
           packages.provider-load-gen = pkgs.callPackage ./load-testing-tools/provider-load-generator { };
           packages.read-load-gen = pkgs.callPackage ./load-testing-tools/read-load-generator { };
-          packages.read-load-gen-container = (
-            let
-              system = "aarch64-linux";
-              pkgs = import nixpkgs { inherit system; };
-            in
+          packages.read-load-gen-container-with-pkgs = { pkgs }: (
             pkgs.dockerTools.buildLayeredImage {
               name = "storetheindex-read-load-gen";
               tag = "latest";
 
               contents = [
                 pkgs.cacert
-                self.packages.${system}.read-load-gen
+                (pkgs.callPackage
+                  ./load-testing-tools/read-load-generator
+                  { })
               ];
               config = {
                 Cmd = [ "/bin/read-load-generator" ];
               };
             }
           );
+          packages.read-load-gen-arm-container = self.packages.${system}.read-load-gen-container-with-pkgs {
+            pkgs = import nixpkgs {
+              inherit system;
+              crossSystem = { config = "aarch64-unknown-linux-gnu"; };
+            };
+          };
+          packages.read-load-gen-container = self.packages.${system}.read-load-gen-container-with-pkgs { pkgs = import nixpkgs { inherit system; }; };
+          packages.build-and-fetch-load-gen-container = pkgs.writeScriptBin "build-and-fetch-load-gen-container" ''
+            set -euo pipefail
+            deployerIP=$(${pkgs.terraform_0_14}/bin/terraform output -json | ${jq} -r '.["deployerIP"].value')
+
+            # Have the deployer build the arm container
+            containerPath=$(ssh root@$deployerIP "cd storetheindex-deployment && nix build .#read-load-gen-arm-container --no-link --json" | ${jq} -r '.[0].outputs.out')
+            # Then we'll copy the built container locally so that we can give it to our docker.
+            nix-copy-closure --from root@${deployerIP} $containerPath
+            docker load < $containerPath
+          '';
           packages.nix-prefetch = pkgs.callPackage (import "${nix-prefetch}/default.nix") {
             nix = pkgs.nix_2_4;
           };
@@ -237,7 +254,7 @@
               self.packages.${system}.nix-prefetch
               self.packages.${system}.update-vendor-sha
               self.packages.${system}.invoke-read-load-gen
-
+              self.packages.${system}.build-and-fetch-load-gen-container
             ];
           };
         });

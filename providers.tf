@@ -9,6 +9,7 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  profile = var.profile
-  region  = "us-west-2"
+  profile             = var.profile
+  region              = "us-west-2"
+  allowed_account_ids = ["407967248065"]
 }
