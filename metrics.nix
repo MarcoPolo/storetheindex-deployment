@@ -21,6 +21,10 @@
           name = "Indexer";
           options.path = "/etc/grafana/dashboards/indexer";
         }
+        {
+          name = "Read Load Generator";
+          options.path = "/etc/grafana/dashboards/load-generators";
+        }
       ];
     };
   };

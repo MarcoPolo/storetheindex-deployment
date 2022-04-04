@@ -21,7 +21,16 @@
   outputs = { self, nixpkgs, deploy-rs, flake-utils, storetheindex-src, nix-prefetch }:
     let
       ssh-key-path = "~/.ssh/marco-storetheindex-deployment";
-      tf-output = builtins.fromJSON (builtins.readFile ./terraform-output.json);
+      tf-output =
+        let
+          file-path = ./terraform-output.json;
+          file-contents = if builtins.pathExists file-path then builtins.readFile file-path else "";
+          firstChar = builtins.substring 0 1 file-contents;
+        in
+        if firstChar == "{" then
+          (builtins.fromJSON file-contents)
+        else
+          { };
       deployerIP = (tf-output.deployerIP.value or "0.0.0.0");
       indexerIP = (tf-output.indexerIP.value or "0.0.0.0");
       indexer2IP = (tf-output.indexer2IP.value or "0.0.0.0");
@@ -108,13 +117,37 @@
             '';
           rsync-to-deployer = pkgs.writeScriptBin "rsync-to-deployer"
             ''
-              deployerIP=$(update-terraform-output | jq -r .deployerIP.value)
-              ${pkgs.rsync}/bin/rsync -e 'ssh -i ${ssh-key-path}' -azP --delete --filter=":- .gitignore" --exclude=".direnv" --exclude='.git*' . root@$deployerIP:~/storetheindex-deployment
+              if [[ -z "''${OVERRIDE_DEPLOYER_IP}" ]]; then
+                deployerIP=$(update-terraform-output | ${jq} -r .deployerIP.value)
+              else
+                deployerIP=$OVERRIDE_DEPLOYER_IP
+              fi
+              ${pkgs.rsync}/bin/rsync -e 'ssh -o StrictHostKeyChecking=accept-new -i ${ssh-key-path}' -azP --delete --filter=":- .gitignore" --exclude=".direnv" --exclude='.git*' . root@$deployerIP:~/storetheindex-deployment
             '';
           ssh-to-deployer = pkgs.writeScriptBin "ssh-to-deployer"
             ''
-              deployerIP=$(update-terraform-output | jq -r .deployerIP.value)
-              ssh -i ${ssh-key-path} root@$deployerIP $@
+              if [[ -z "''${OVERRIDE_DEPLOYER_IP}" ]]; then
+                deployerIP=$(update-terraform-output | ${jq} -r .deployerIP.value)
+              else
+                deployerIP=$OVERRIDE_DEPLOYER_IP
+                echo "Using override deployerIP: $deployerIP"
+              fi
+              ssh -o StrictHostKeyChecking=accept-new -i ${ssh-key-path} root@$deployerIP $@
+            '';
+          # Special case where we are still bootstrapping during terraform apply
+          deploy-first-time = pkgs.writeScriptBin "deploy-first-time"
+            ''
+              cat <<EOF > terraform-output.json
+              {
+                "deployerIP": {
+                  "sensitive": false,
+                  "type": "string",
+                  "value": "$1"
+                }
+              }
+              EOF
+              OVERRIDE_DEPLOYER_IP=$1 ${rsync-to-deployer}/bin/rsync-to-deployer;
+              OVERRIDE_DEPLOYER_IP=$1 ${ssh-to-deployer}/bin/ssh-to-deployer "cd storetheindex-deployment && nix run .  -- -s .#deployer --ssh-opts='-o StrictHostKeyChecking=accept-new' --hostname '127.0.0.1'";
             '';
           deploy-on-deployer = pkgs.writeScriptBin "deploy-on-deployer"
             ''
@@ -234,7 +267,8 @@
           packages.nix-prefetch = pkgs.callPackage (import "${nix-prefetch}/default.nix") {
             nix = pkgs.nix_2_4;
           };
-          defaultPackage = deploy-on-deployer;
+          packages.deploy-first-time = deploy-first-time;
+          defaultApp = deploy-rs.defaultApp.${system};
           devShell = pkgs.mkShell {
             INDEXER_IP = indexerIP;
             INDEXER2_IP = (tf-output.indexer2IP.value or "0.0.0.0");

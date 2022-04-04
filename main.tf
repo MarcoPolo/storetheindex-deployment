@@ -275,8 +275,8 @@ resource "null_resource" "deploy_deployer_config" {
   # Switch the deployer to the defined NixOS Config
   provisioner "local-exec" {
     command = <<EOF
-          nix run . -- .#deployer
-       EOF
+      nix run .#deploy-first-time -- ${aws_instance.marco-storetheindex-deployer.public_ip}
+    EOF
   }
 }
 
