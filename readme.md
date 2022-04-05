@@ -30,10 +30,6 @@ metrics from the read load generator side.
 Running a read load test with 100 concurrent workers each making 500 concurrent
 requests a second (50k rps).
 
-Make sure `$DEPLOYER_IP` is correct here. You can verify with `echo
-$DEPLOYER_IP`. You may need to reload the `nix develop` environment (by exiting
-and starting it again) or by running `direnv reload` if you're using `direnv`.
-You can always manually replace the $DEPLOYER_IP value here as well.
 
 ```bash
 CONCURRENT_REQS=100 invoke-read-load-gen <<EOF
@@ -48,6 +44,11 @@ CONCURRENT_REQS=100 invoke-read-load-gen <<EOF
 }
 EOF
 ```
+
+Make sure `$DEPLOYER_IP` is correct here. You can verify with `echo
+$DEPLOYER_IP`. You may need to reload the `nix develop` environment (by exiting
+and starting it again) or by running `direnv reload` if you're using `direnv`.
+You can always manually replace the $DEPLOYER_IP value here as well.
 
 ## Running read load generator locally
 
